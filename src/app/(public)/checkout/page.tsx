@@ -4,14 +4,13 @@ import { useState, useEffect } from "react"
 import { useCartStore } from "@/stores/cartStore"
 import CheckoutForm from "@/components/forms/CheckoutForm"
 import OrderSummary from "@/components/shared/OrderSummary"
-import { loadPaystackScript } from "@/lib/paystack"
 
 export default function CheckoutPage() {
   const { items, getSubtotal, getTotal } = useCartStore()
   const [isReady, setIsReady] = useState(false)
 
   useEffect(() => {
-    loadPaystackScript().then(() => setIsReady(true))
+    setIsReady(true)
   }, [])
 
   if (items.length === 0) {

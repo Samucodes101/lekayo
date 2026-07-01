@@ -4,38 +4,37 @@ import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth"
 
 export async function GET() {
-  const campaigns = await prisma.seasonalCampaign.findMany({
-    include: { featuredProducts: { include: { product: true } } },
-    orderBy: { startsAt: "desc" },
+  const coupons = await prisma.coupon.findMany({
+    orderBy: { createdAt: "desc" },
   })
-  return NextResponse.json(campaigns)
+  return NextResponse.json(coupons)
 }
 
 export async function POST(req: NextRequest) {
   const session = await getServerSession(authOptions)
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
   const data = await req.json()
-  const campaign = await prisma.seasonalCampaign.create({
+  const coupon = await prisma.coupon.create({
     data: {
       ...data,
-      startsAt: new Date(data.startsAt),
-      endsAt: new Date(data.endsAt),
+      validFrom: new Date(data.validFrom),
+      validUntil: new Date(data.validUntil),
     },
   })
-  return NextResponse.json(campaign)
+  return NextResponse.json(coupon)
 }
 
 export async function PUT(req: NextRequest) {
   const session = await getServerSession(authOptions)
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
   const { id, ...data } = await req.json()
-  const campaign = await prisma.seasonalCampaign.update({
+  const coupon = await prisma.coupon.update({
     where: { id },
     data: {
       ...data,
-      startsAt: data.startsAt ? new Date(data.startsAt) : undefined,
-      endsAt: data.endsAt ? new Date(data.endsAt) : undefined,
+      validFrom: data.validFrom ? new Date(data.validFrom) : undefined,
+      validUntil: data.validUntil ? new Date(data.validUntil) : undefined,
     },
   })
-  return NextResponse.json(campaign)
+  return NextResponse.json(coupon)
 }

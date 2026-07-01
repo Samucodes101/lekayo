@@ -3,7 +3,7 @@
 import Image from "next/image"
 import Link from "next/link"
 import { ProductWithVariants } from "@/types"
-import { formatPrice } from "@/lib/utils"
+import { cn, formatPrice } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { Heart } from "lucide-react"
 import { useWishlistStore } from "@/stores/wishlistStore"
@@ -22,7 +22,14 @@ export default function ProductCard({ product }: ProductCardProps) {
       removeItem(product.id)
       toast({ title: "Removed from wishlist" })
     } else {
-      addItem(product)
+      const wishlistItem = {
+        id: product.id,
+        name: product.name,
+        slug: product.slug,
+        price: product.salePrice ?? product.basePrice,
+        image: firstVariant?.images[0]?.url || "/placeholder.png",
+      }
+      addItem(wishlistItem)
       toast({ title: "Added to wishlist" })
     }
   }

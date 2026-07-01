@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
 import { useCartStore } from "@/stores/cartStore"
-import { loadPaystackScript, initializePayment } from "@/lib/paystack"
+import { initializePayment } from "@/lib/paystack"
 import { toast } from "@/hooks/use-toast"
 
 const checkoutSchema = z.object({

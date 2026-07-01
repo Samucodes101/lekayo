@@ -5,8 +5,8 @@ import { authOptions } from "@/lib/auth"
 
 export async function PUT(req: NextRequest) {
   const session = await getServerSession(authOptions)
-  if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+  if (!session?.user?.email) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
   const { name } = await req.json()
-  await prisma.user.update({ where: { email: session.user.email! }, data: { name } })
+  await prisma.user.update({ where: { email: session.user.email }, data: { name } })
   return NextResponse.json({ success: true })
 }

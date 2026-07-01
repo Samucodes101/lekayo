@@ -13,13 +13,13 @@ export default async function HomePage() {
   const featuredProducts = await prisma.product.findMany({
     where: { featured: true, status: "PUBLISHED" },
     take: 8,
-    include: { variants: { include: { images: true } }, brand: true },
+    include: { variants: { include: { images: true } }, brand: true, category: true },
   })
   const newArrivals = await prisma.product.findMany({
     where: { status: "PUBLISHED" },
     orderBy: { createdAt: "desc" },
     take: 8,
-    include: { variants: { include: { images: true } }, brand: true },
+    include: { variants: { include: { images: true } }, brand: true, category: true },
   })
   const activeCampaign = await prisma.seasonalCampaign.findFirst({
     where: { active: true, startsAt: { lte: new Date() }, endsAt: { gte: new Date() } },
@@ -30,6 +30,7 @@ export default async function HomePage() {
             include: {
               variants: { include: { images: true } },
               brand: true,
+              category: true,
             },
           },
         },

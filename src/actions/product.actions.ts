@@ -29,7 +29,7 @@ export async function updateProduct(id: string, data: any) {
   if (!session || (session.user.role !== Role.SUPER_ADMIN && session.user.role !== Role.ADMIN)) throw new Error("Unauthorized")
 
   const validated = productSchema.parse(data)
-  const product = await prisma.product.update({ where: { id }, data: validated })
+  const product = await prisma.product.update({ where: { id }, data: validated as any })
   revalidatePath(`/admin/products/${id}`)
   revalidatePath(`/products/${product.slug}`)
   return product

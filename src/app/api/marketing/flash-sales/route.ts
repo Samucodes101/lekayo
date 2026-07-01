@@ -6,7 +6,7 @@ import { authOptions } from "@/lib/auth"
 export async function GET() {
   const sales = await prisma.flashSale.findMany({
     include: { products: { include: { product: true } } },
-    orderBy: { startsAt: "desc" }, // Use startsAt instead of createdAt
+    orderBy: { createdAt: "desc" },
   })
   return NextResponse.json(sales)
 }

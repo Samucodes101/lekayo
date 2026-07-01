@@ -3,8 +3,8 @@ import { NextResponse } from 'next/server'
 import { Role } from '@prisma/client'
 
 export default withAuth(
-  function middleware(req) {
-    const token = req.nextauth.token
+  function middleware(req: any) {
+    const token = req.nextauth?.token
     const path = req.nextUrl.pathname
 
     // Public routes (no auth needed)

@@ -4,7 +4,7 @@ import Link from "next/link"
 
 interface HeroBannerProps {
   headline: string
-  subheadline?: string
+  subheadline?: string | null
   ctaText: string
   ctaLink: string
   image: string

@@ -15,7 +15,7 @@ export interface CartItem {
 
 interface CartStore {
   items: CartItem[]
-  addItem: (item: CartItem) => void
+  addItem: (variantId: string, quantity?: number) => void
   removeItem: (variantId: string) => void
   updateQuantity: (variantId: string, quantity: number) => void
   clearCart: () => void
@@ -23,18 +23,19 @@ interface CartStore {
   getDiscount: () => number
   getShipping: () => number
   getTotal: () => number
+  getTotalPrice: () => number
 }
 
 export const useCartStore = create<CartStore>()(
   persist(
     (set, get) => ({
       items: [],
-      addItem: (item) => set((state) => {
-        const existing = state.items.find(i => i.variantId === item.variantId)
+      addItem: (variantId, quantity = 1) => set((state) => {
+        const existing = state.items.find(i => i.variantId === variantId)
         if (existing) {
-          return { items: state.items.map(i => i.variantId === item.variantId ? { ...i, quantity: i.quantity + item.quantity } : i) }
+          return { items: state.items.map(i => i.variantId === variantId ? { ...i, quantity: i.quantity + quantity } : i) }
         }
-        return { items: [...state.items, item] }
+        return { items: [...state.items, { variantId, productId: variantId, name: "Product", sku: "", price: 0, quantity, image: "" }] }
       }),
       removeItem: (variantId) => set((state) => ({ items: state.items.filter(i => i.variantId !== variantId) })),
       updateQuantity: (variantId, quantity) => set((state) => ({ items: state.items.map(i => i.variantId === variantId ? { ...i, quantity } : i) })),
@@ -43,6 +44,7 @@ export const useCartStore = create<CartStore>()(
       getDiscount: () => 0,
       getShipping: () => 0,
       getTotal: () => get().getSubtotal() - get().getDiscount() + get().getShipping(),
+      getTotalPrice: () => get().getTotal(),
     }),
     { name: "cart-storage" }
   )

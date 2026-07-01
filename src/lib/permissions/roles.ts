@@ -1,6 +1,6 @@
 import { Role } from "@prisma/client"
 
-export const rolePermissions = {
+export const rolePermissions: Record<Role, string[]> = {
   [Role.SUPER_ADMIN]: ["*"],
   [Role.ADMIN]: ["products:read", "products:write", "orders:read", "orders:write", "customers:read", "inventory:read", "inventory:write", "analytics:read", "cms:write"],
   [Role.CUSTOMER_SERVICE]: ["products:read", "orders:read", "customers:read"],
@@ -11,6 +11,6 @@ export const rolePermissions = {
 }
 
 export function hasPermission(role: Role, permission: string) {
-  const perms = rolePermissions[role]
+  const perms = rolePermissions[role] ?? []
   return perms.includes("*") || perms.includes(permission)
 }

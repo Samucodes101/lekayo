@@ -5,7 +5,6 @@ import { Button } from "@/components/ui/button"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Switch } from "@/components/ui/switch"
 import { toast } from "@/hooks/use-toast"
-import { DragDropContext, Droppable, Draggable } from "react-beautiful-dnd"
 
 export default function HomepageCMS() {
   const [sections, setSections] = useState<any[]>([])
@@ -16,12 +15,12 @@ export default function HomepageCMS() {
       .then((data) => setSections(data))
   }, [])
 
-  const handleDragEnd = (result: any) => {
-    if (!result.destination) return
-    const items = Array.from(sections)
-    const [reordered] = items.splice(result.source.index, 1)
-    items.splice(result.destination.index, 0, reordered)
-    setSections(items)
+  const moveSection = (fromIndex: number, toIndex: number) => {
+    if (toIndex < 0 || toIndex >= sections.length) return
+    const updated = [...sections]
+    const [moved] = updated.splice(fromIndex, 1)
+    updated.splice(toIndex, 0, moved)
+    setSections(updated)
   }
 
   const handleReorder = async () => {
@@ -57,43 +56,36 @@ export default function HomepageCMS() {
         <Button onClick={handleReorder}>Save Order</Button>
       </div>
 
-      <DragDropContext onDragEnd={handleDragEnd}>
-        <Droppable droppableId="sections">
-          {(provided) => (
-            <div ref={provided.innerRef} {...provided.droppableProps}>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Order</TableHead>
-                    <TableHead>Section</TableHead>
-                    <TableHead>Visible</TableHead>
-                    <TableHead></TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {sections.map((section, idx) => (
-                    <Draggable key={section.id} draggableId={section.id} index={idx}>
-                      {(provided) => (
-                        <TableRow ref={provided.innerRef} {...provided.draggableProps} {...provided.dragHandleProps}>
-                          <TableCell>{idx + 1}</TableCell>
-                          <TableCell>{section.sectionType}</TableCell>
-                          <TableCell>
-                            <Switch checked={section.visible} onCheckedChange={(v) => toggleVisibility(section.id, v)} />
-                          </TableCell>
-                          <TableCell>
-                            <Button variant="outline" size="sm">Edit</Button>
-                          </TableCell>
-                        </TableRow>
-                      )}
-                    </Draggable>
-                  ))}
-                  {provided.placeholder}
-                </TableBody>
-              </Table>
-            </div>
-          )}
-        </Droppable>
-      </DragDropContext>
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead>Order</TableHead>
+            <TableHead>Section</TableHead>
+            <TableHead>Visible</TableHead>
+            <TableHead>Actions</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {sections.map((section, idx) => (
+            <TableRow key={section.id}>
+              <TableCell>{idx + 1}</TableCell>
+              <TableCell>{section.sectionType}</TableCell>
+              <TableCell>
+                <Switch checked={section.visible} onCheckedChange={(v) => toggleVisibility(section.id, v)} />
+              </TableCell>
+              <TableCell className="space-x-2">
+                <Button variant="outline" size="sm" onClick={() => moveSection(idx, idx - 1)} disabled={idx === 0}>
+                  ↑
+                </Button>
+                <Button variant="outline" size="sm" onClick={() => moveSection(idx, idx + 1)} disabled={idx === sections.length - 1}>
+                  ↓
+                </Button>
+                <Button variant="outline" size="sm">Edit</Button>
+              </TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
     </div>
   )
 }

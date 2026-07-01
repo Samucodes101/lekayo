@@ -1,7 +1,7 @@
 import { create } from "zustand"
 import { persist } from "zustand/middleware"
 
-interface WishlistItem {
+export interface WishlistItem {
   id: string
   name: string
   slug: string

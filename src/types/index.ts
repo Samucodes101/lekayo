@@ -5,7 +5,7 @@ export interface ProductWithVariants {
   sku: string
   description: string
   basePrice: number
-  salePrice?: number
+  salePrice?: number | null
   featured: boolean
   status: string
   brand: { id: string; name: string; slug: string }
@@ -13,10 +13,10 @@ export interface ProductWithVariants {
   variants: Array<{
     id: string
     sku: string
-    price?: number
+    price?: number | null
     stock: number
     color?: { name: string; hexCode: string }
-    sizeValue?: string
+    sizeValue?: string | null
     images: Array<{ url: string; altText?: string }>
   }>
 }

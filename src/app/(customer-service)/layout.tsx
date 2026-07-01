@@ -2,7 +2,7 @@ import { getServerSession } from "next-auth"
 import { redirect } from "next/navigation"
 import { authOptions } from "@/lib/auth"
 import { Role } from "@prisma/client"
-import CSNav from "@/components/cs/CSNav"
+import CSNav from "./cs/CSNav"
 
 export default async function CustomerServiceLayout({ children }: { children: React.ReactNode }) {
   const session = await getServerSession(authOptions)

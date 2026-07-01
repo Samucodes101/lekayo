@@ -526,6 +526,14 @@ model ActivityLog {
   user        User?    @relation(fields: [userId], references: [id])
 }
 
+model Setting {
+  id        String   @id @default(cuid())
+  key       String   @unique
+  value     Json
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
 // ---------- Reviews ----------
 model Review {
   id          String   @id @default(cuid())

@@ -5,9 +5,9 @@ import { authOptions } from "@/lib/auth"
 
 export async function POST(req: NextRequest) {
   const session = await getServerSession(authOptions)
-  if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+  if (!session?.user?.email) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
   const data = await req.json()
-  const user = await prisma.user.findUnique({ where: { email: session.user.email! } })
+  const user = await prisma.user.findUnique({ where: { email: session.user.email } })
   const address = await prisma.address.create({ data: { ...data, userId: user!.id } })
   return NextResponse.json(address)
 }

@@ -23,8 +23,8 @@ export function RoleGuard({ roles, children, fallback }: RoleGuardProps) {
     redirect("/login")
   }
 
-  const userRole = session.user.role as Role
-  if (!roles.includes(userRole)) {
+  const userRole = session.user?.role as Role | undefined
+  if (!userRole || !roles.includes(userRole)) {
     if (fallback) return fallback
     redirect("/")
   }
