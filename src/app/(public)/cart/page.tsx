@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button"
 import Link from "next/link"
 
 export default function CartPage() {
-  const { items, getSubtotal, getDiscount, getShipping, getTotal } = useCartStore()
+  const { items, getSubtotal, getTotal } = useCartStore()
 
   if (items.length === 0) {
     return (
@@ -28,8 +28,15 @@ export default function CartPage() {
           ))}
         </div>
         <div>
-          <OrderSummary subtotal={getSubtotal()} discount={getDiscount()} shipping={getShipping()} total={getTotal()} />
-          <Button asChild className="w-full mt-4"><Link href="/checkout">Proceed to Checkout</Link></Button>
+          <OrderSummary
+            subtotal={getSubtotal()}
+            discount={0}
+            shipping={0}
+            total={getTotal()}
+          />
+          <Button asChild className="w-full mt-4">
+            <Link href="/checkout">Proceed to Checkout</Link>
+          </Button>
         </div>
       </div>
     </div>

@@ -6,6 +6,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { ImageUpload } from "@/components/shared/ImageUpload"
 import { toast } from "@/hooks/use-toast"
 import Image from "next/image"
 
@@ -53,7 +54,15 @@ export default function GalleryPage() {
           <DialogContent>
             <DialogHeader><DialogTitle>{editing ? "Edit" : "Add"} Image</DialogTitle></DialogHeader>
             <div className="space-y-4">
-              <div><Label>Image URL</Label><Input value={form.image} onChange={(e) => setForm({ ...form, image: e.target.value })} /></div>
+              <div>
+                <Label>Image</Label>
+                <ImageUpload
+                  value={form.image}
+                  onChange={(url) => setForm({ ...form, image: url })}
+                  onRemove={() => setForm({ ...form, image: "" })}
+                  folder="gallery"
+                />
+              </div>
               <div><Label>Link (optional)</Label><Input value={form.link} onChange={(e) => setForm({ ...form, link: e.target.value })} /></div>
               <div><Label>Alt Text</Label><Input value={form.altText} onChange={(e) => setForm({ ...form, altText: e.target.value })} /></div>
               <div><Label>Order</Label><Input type="number" value={form.order} onChange={(e) => setForm({ ...form, order: Number(e.target.value) })} /></div>

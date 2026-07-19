@@ -4,10 +4,11 @@ import { SeasonalCampaign as Campaign } from "@prisma/client"
 import ProductGrid from "./ProductGrid"
 
 interface SeasonalCampaignProps {
-  campaign: Campaign & { featuredProducts: any[] }
+  campaign: Campaign & { featuredProducts: any[] } | null
 }
 
 export default function SeasonalCampaign({ campaign }: SeasonalCampaignProps) {
+  if (!campaign) return null  
   const products = campaign.featuredProducts.map((fp: any) => fp.product)
 
   return (

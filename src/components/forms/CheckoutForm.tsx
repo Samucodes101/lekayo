@@ -8,7 +8,6 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
 import { useCartStore } from "@/stores/cartStore"
-import { initializePayment } from "@/lib/paystack"
 import { toast } from "@/hooks/use-toast"
 
 const checkoutSchema = z.object({
@@ -34,14 +33,32 @@ export default function CheckoutForm() {
     try {
       const res = await fetch("/api/checkout/init", {
         method: "POST",
-        body: JSON.stringify({ ...data, items, total: getTotal() }),
+        body: JSON.stringify({
+          ...data,
+          items: items.map((item) => ({
+            variantId: item.variantId,
+            quantity: item.quantity,
+            price: item.price,
+          })),
+          total: getTotal(),
+        }),
         headers: { "Content-Type": "application/json" },
       })
+
+      if (!res.ok) {
+        const error = await res.text()
+        throw new Error(error)
+      }
+
       const { authorizationUrl, reference } = await res.json()
+      if (!authorizationUrl) {
+        throw new Error("No authorization URL returned")
+      }
+
       // Redirect to Paystack
       window.location.href = authorizationUrl
-    } catch (error) {
-      toast({ title: "Checkout failed", variant: "destructive" })
+    } catch (error: any) {
+      toast({ title: "Checkout failed", description: error.message || "Something went wrong.", variant: "destructive" })
     } finally {
       setLoading(false)
     }
@@ -50,19 +67,37 @@ export default function CheckoutForm() {
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-        <FormField control={form.control} name="email" render={({ field }) => (<FormItem><FormLabel>Email</FormLabel><FormControl><Input type="email" {...field} /></FormControl><FormMessage /></FormItem>)} />
+        <FormField control={form.control} name="email" render={({ field }) => (
+          <FormItem><FormLabel>Email</FormLabel><FormControl><Input type="email" {...field} /></FormControl><FormMessage /></FormItem>
+        )} />
         <div className="grid md:grid-cols-2 gap-4">
-          <FormField control={form.control} name="firstName" render={({ field }) => (<FormItem><FormLabel>First Name</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
-          <FormField control={form.control} name="lastName" render={({ field }) => (<FormItem><FormLabel>Last Name</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
+          <FormField control={form.control} name="firstName" render={({ field }) => (
+            <FormItem><FormLabel>First Name</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
+          )} />
+          <FormField control={form.control} name="lastName" render={({ field }) => (
+            <FormItem><FormLabel>Last Name</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
+          )} />
         </div>
-        <FormField control={form.control} name="address" render={({ field }) => (<FormItem><FormLabel>Address</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
+        <FormField control={form.control} name="address" render={({ field }) => (
+          <FormItem><FormLabel>Address</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
+        )} />
         <div className="grid md:grid-cols-3 gap-4">
-          <FormField control={form.control} name="city" render={({ field }) => (<FormItem><FormLabel>City</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
-          <FormField control={form.control} name="state" render={({ field }) => (<FormItem><FormLabel>State</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
-          <FormField control={form.control} name="postalCode" render={({ field }) => (<FormItem><FormLabel>Postal Code</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
+          <FormField control={form.control} name="city" render={({ field }) => (
+            <FormItem><FormLabel>City</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
+          )} />
+          <FormField control={form.control} name="state" render={({ field }) => (
+            <FormItem><FormLabel>State</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
+          )} />
+          <FormField control={form.control} name="postalCode" render={({ field }) => (
+            <FormItem><FormLabel>Postal Code</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
+          )} />
         </div>
-        <FormField control={form.control} name="phone" render={({ field }) => (<FormItem><FormLabel>Phone</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
-        <Button type="submit" disabled={loading} className="w-full">Place Order & Pay</Button>
+        <FormField control={form.control} name="phone" render={({ field }) => (
+          <FormItem><FormLabel>Phone</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
+        )} />
+        <Button type="submit" disabled={loading} className="w-full">
+          {loading ? "Processing..." : "Place Order & Pay"}
+        </Button>
       </form>
     </Form>
   )

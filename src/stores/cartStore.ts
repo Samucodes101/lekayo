@@ -15,37 +15,83 @@ export interface CartItem {
 
 interface CartStore {
   items: CartItem[]
-  addItem: (variantId: string, quantity?: number) => void
+  isHydrated: boolean
+  addItem: (item: Omit<CartItem, 'quantity'> & { quantity?: number }) => void
   removeItem: (variantId: string) => void
   updateQuantity: (variantId: string, quantity: number) => void
   clearCart: () => void
+  mergeGuestCart: (userEmail: string) => Promise<void>
+  syncWithServer: (userEmail: string) => Promise<void>
   getSubtotal: () => number
-  getDiscount: () => number
-  getShipping: () => number
   getTotal: () => number
-  getTotalPrice: () => number
+  setHydrated: (state: boolean) => void
 }
 
 export const useCartStore = create<CartStore>()(
   persist(
     (set, get) => ({
       items: [],
-      addItem: (variantId, quantity = 1) => set((state) => {
-        const existing = state.items.find(i => i.variantId === variantId)
-        if (existing) {
-          return { items: state.items.map(i => i.variantId === variantId ? { ...i, quantity: i.quantity + quantity } : i) }
-        }
-        return { items: [...state.items, { variantId, productId: variantId, name: "Product", sku: "", price: 0, quantity, image: "" }] }
-      }),
-      removeItem: (variantId) => set((state) => ({ items: state.items.filter(i => i.variantId !== variantId) })),
-      updateQuantity: (variantId, quantity) => set((state) => ({ items: state.items.map(i => i.variantId === variantId ? { ...i, quantity } : i) })),
+      isHydrated: false,
+      setHydrated: (state: boolean) => set({ isHydrated: state }),
+
+      addItem: (item) =>
+        set((state) => {
+          const existing = state.items.find((i) => i.variantId === item.variantId)
+          if (existing) {
+            return {
+              items: state.items.map((i) =>
+                i.variantId === item.variantId
+                  ? { ...i, quantity: i.quantity + (item.quantity || 1) }
+                  : i
+              ),
+            }
+          }
+          return {
+            items: [...state.items, { ...item, quantity: item.quantity || 1 }],
+          }
+        }),
+
+      removeItem: (variantId) =>
+        set((state) => ({
+          items: state.items.filter((i) => i.variantId !== variantId),
+        })),
+
+      updateQuantity: (variantId, quantity) =>
+        set((state) => ({
+          items: state.items.map((i) =>
+            i.variantId === variantId ? { ...i, quantity } : i
+          ),
+        })),
+
       clearCart: () => set({ items: [] }),
+
+      mergeGuestCart: async (userEmail: string) => {
+        const { items } = get()
+        if (items.length === 0) return
+        await fetch("/api/cart/merge", {
+          method: "POST",
+          body: JSON.stringify({ items, userEmail }),
+          headers: { "Content-Type": "application/json" },
+        })
+        set({ items: [] })
+      },
+
+      syncWithServer: async (userEmail: string) => {
+        const res = await fetch(`/api/cart?userEmail=${userEmail}`)
+        if (res.ok) {
+          const serverItems = await res.json()
+          set({ items: serverItems })
+        }
+      },
+
       getSubtotal: () => get().items.reduce((sum, i) => sum + i.price * i.quantity, 0),
-      getDiscount: () => 0,
-      getShipping: () => 0,
-      getTotal: () => get().getSubtotal() - get().getDiscount() + get().getShipping(),
-      getTotalPrice: () => get().getTotal(),
+      getTotal: () => get().getSubtotal(),
     }),
-    { name: "cart-storage" }
+    {
+      name: "cart-storage",
+      onRehydrateStorage: () => (state) => {
+        state?.setHydrated(true)
+      },
+    }
   )
 )

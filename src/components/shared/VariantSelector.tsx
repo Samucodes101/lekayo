@@ -3,34 +3,62 @@
 import { ProductVariant, Color } from "@prisma/client"
 
 interface VariantSelectorProps {
-  variants: ProductVariant[]
+  variants: (ProductVariant & { color?: Color | null })[]
   selectedColorId?: string
   selectedSize?: string
   onColorChange: (colorId: string) => void
   onSizeChange: (size: string) => void
 }
 
-export default function VariantSelector({ variants, selectedColorId, selectedSize, onColorChange, onSizeChange }: VariantSelectorProps) {
-  const colors = Array.from(
-    new Map(
-      variants
-        .filter((v) => v.colorId)
-        .map((v) => [v.colorId, v.colorId])
-    ).values()
-  ).filter(Boolean) as string[]
-  const sizes = Array.from(new Set(variants.filter((v) => v.sizeValue).map((v) => v.sizeValue).filter(Boolean))) as string[]
+export default function VariantSelector({
+  variants,
+  selectedColorId,
+  selectedSize,
+  onColorChange,
+  onSizeChange,
+}: VariantSelectorProps) {
+  // Extract unique colors from variants
+  const colorMap = new Map<string, { id: string; name: string; hexCode: string }>()
+  variants.forEach(v => {
+    if (v.color) {
+      colorMap.set(v.color.id, {
+        id: v.color.id,
+        name: v.color.name,
+        hexCode: v.color.hexCode,
+      })
+    }
+  })
+  const colors = Array.from(colorMap.values())
+
+  // Extract unique sizes from variants
+  const sizeSet = new Set<string>()
+  variants.forEach(v => {
+    if (v.sizeValue) {
+      sizeSet.add(v.sizeValue)
+    }
+  })
+  const sizes = Array.from(sizeSet)
+
+  // If no colors or sizes, don't render
+  if (colors.length === 0 && sizes.length === 0) {
+    return null
+  }
 
   return (
     <div className="space-y-4">
       {colors.length > 0 && (
         <div>
           <label className="block text-sm font-medium mb-2">Color</label>
-          <div className="flex gap-2">
-            {colors.map((colorId) => (
+          <div className="flex flex-wrap gap-2">
+            {colors.map((color) => (
               <button
-                key={colorId}
-                onClick={() => onColorChange(colorId)}
-                className={`w-8 h-8 rounded-full border-2 ${selectedColorId === colorId ? "border-black" : "border-transparent"}`}
+                key={color.id}
+                onClick={() => onColorChange(color.id)}
+                className={`w-10 h-10 rounded-full border-2 flex items-center justify-center transition ${
+                  selectedColorId === color.id ? "border-black" : "border-transparent"
+                }`}
+                style={{ backgroundColor: color.hexCode }}
+                title={color.name}
               />
             ))}
           </div>
@@ -44,7 +72,11 @@ export default function VariantSelector({ variants, selectedColorId, selectedSiz
               <button
                 key={size}
                 onClick={() => onSizeChange(size)}
-                className={`px-3 py-1 border rounded-md text-sm ${selectedSize === size ? "bg-black text-white border-black" : "bg-white text-black border-gray-300 hover:border-black"}`}
+                className={`px-4 py-2 border rounded-md text-sm transition ${
+                  selectedSize === size
+                    ? "bg-black text-white border-black"
+                    : "bg-white text-black border-gray-300 hover:border-black"
+                }`}
               >
                 {size}
               </button>

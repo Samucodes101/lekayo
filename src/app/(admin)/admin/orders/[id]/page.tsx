@@ -6,6 +6,7 @@ import { formatPrice } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { updateOrderStatus } from "@/actions/order.actions"
 import { OrderStatus } from "@prisma/client"
+import Link from "next/link"
 
 export default async function AdminOrderDetailPage({ params }: { params: { id: string } }) {
   const order = await prisma.order.findUnique({
@@ -25,15 +26,30 @@ export default async function AdminOrderDetailPage({ params }: { params: { id: s
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <h1 className="text-2xl font-serif">Order #{order.orderNumber}</h1>
-        <form action={updateOrderStatus}>
-          <input type="hidden" name="orderId" value={order.id} />
-          <select name="status" defaultValue={order.status} className="border rounded p-2 mr-2">
-            {statuses.map((s) => (
-              <option key={s} value={s}>{s}</option>
-            ))}
-          </select>
-          <Button type="submit">Update Status</Button>
-        </form>
+  <div className="flex gap-2">
+    <Link
+      href={`/admin/orders/${order.id}/print`}
+      target="_blank"
+      className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+    >
+       Print Receipt
+    </Link>
+    {/* other buttons like status update */}
+  </div>
+<form
+  action={async (formData: FormData) => {
+    "use server"
+    await updateOrderStatus(formData)
+  }}
+>
+  <input type="hidden" name="orderId" value={order.id} />
+  <select name="status" defaultValue={order.status} className="border rounded p-2 mr-2">
+    {statuses.map((s) => (
+      <option key={s} value={s}>{s}</option>
+    ))}
+  </select>
+  <Button type="submit">Update Status</Button>
+</form>
       </div>
 
       <div className="grid gap-4 md:grid-cols-2">

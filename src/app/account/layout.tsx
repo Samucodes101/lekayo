@@ -3,9 +3,15 @@ import { redirect } from "next/navigation"
 import { authOptions } from "@/lib/auth"
 import AccountNav from "@/components/shared/AccountNav"
 
-export default async function AccountLayout({ children }: { children: React.ReactNode }) {
+export default async function AccountLayout({
+  children,
+}: {
+  children: React.ReactNode
+}) {
   const session = await getServerSession(authOptions)
-  if (!session) redirect("/login")
+  if (!session) {
+    redirect("/login")
+  }
 
   return (
     <div className="container mx-auto px-4 py-8">

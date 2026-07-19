@@ -7,6 +7,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Switch } from "@/components/ui/switch"
+import { ImageUpload } from "@/components/shared/ImageUpload"
 import { toast } from "@/hooks/use-toast"
 import Image from "next/image"
 
@@ -69,7 +70,15 @@ export default function BannersPage() {
           <DialogContent>
             <DialogHeader><DialogTitle>{editing ? "Edit" : "Add"} Banner</DialogTitle></DialogHeader>
             <div className="space-y-4">
-              <div><Label>Image URL</Label><Input value={form.image} onChange={(e) => setForm({ ...form, image: e.target.value })} /></div>
+              <div>
+                <Label>Banner Image</Label>
+                <ImageUpload
+                  value={form.image}
+                  onChange={(url) => setForm({ ...form, image: url })}
+                  onRemove={() => setForm({ ...form, image: "" })}
+                  folder="banners"
+                />
+              </div>
               <div><Label>Link (optional)</Label><Input value={form.link} onChange={(e) => setForm({ ...form, link: e.target.value })} /></div>
               <div><Label>Position</Label>
                 <select value={form.position} onChange={(e) => setForm({ ...form, position: e.target.value })} className="w-full border rounded p-2">

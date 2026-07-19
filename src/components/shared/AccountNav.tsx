@@ -17,7 +17,14 @@ export default function AccountNav() {
   return (
     <nav className="space-y-2">
       {navItems.map((item) => (
-        <Link key={item.href} href={item.href} className={cn("block px-4 py-2 rounded-md hover:bg-gray-100", pathname === item.href && "bg-gray-100 font-medium")}>
+        <Link
+          key={item.href}
+          href={item.href}
+          className={cn(
+            "block px-4 py-2 rounded-md hover:bg-gray-100",
+            pathname === item.href && "bg-gray-100 font-medium"
+          )}
+        >
           {item.name}
         </Link>
       ))}

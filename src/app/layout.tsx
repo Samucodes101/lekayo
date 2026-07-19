@@ -1,5 +1,6 @@
 import type { Metadata } from "next"
 import { Inter } from "next/font/google"
+import { prisma } from "@/lib/db"
 import "./globals.css"
 import { Providers } from "./providers"
 import Navbar from "@/components/shared/Navbar"
@@ -14,16 +15,22 @@ export const metadata: Metadata = {
   description: "Premium fashion destination",
 }
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: {
   children: React.ReactNode
 }) {
+  const categories = await prisma.category.findMany({
+    include: { subcategories: true },
+    where: { subcategories: { some: {} } },
+    orderBy: { order: "asc" },
+  })
+
   return (
     <html lang="en">
       <body className={inter.className}>
         <Providers>
-          <Navbar />
+          <Navbar categories={categories} />
           <main className="min-h-screen">{children}</main>
           <Footer />
           <Toaster />

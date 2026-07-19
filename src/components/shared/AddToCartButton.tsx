@@ -9,17 +9,44 @@ import { ShoppingBag } from "lucide-react"
 interface AddToCartButtonProps {
   variantId: string
   quantity: number
+  productName: string
+  price: number
+  image: string
+  sku: string
+  productId: string
+  color?: { name: string; hex: string }
+  size?: string
 }
 
-export default function AddToCartButton({ variantId, quantity }: AddToCartButtonProps) {
+export default function AddToCartButton({
+  variantId,
+  quantity,
+  productName,
+  price,
+  image,
+  sku,
+  productId,
+  color,
+  size,
+}: AddToCartButtonProps) {
   const addItem = useCartStore((state) => state.addItem)
   const [loading, setLoading] = useState(false)
 
   const handleAdd = async () => {
     setLoading(true)
     try {
-      await addItem(variantId, quantity)
-      toast({ title: "Added to cart", description: "Item has been added to your cart." })
+      addItem({
+        variantId,
+        productId,
+        name: productName,
+        sku,
+        price,
+        quantity,
+        image,
+        color,
+        size,
+      })
+      toast({ title: "Added to cart", description: `${productName} added to your cart.` })
     } catch (error) {
       toast({ title: "Error", description: "Could not add item to cart.", variant: "destructive" })
     } finally {

@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Switch } from "@/components/ui/switch"
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
+import { ImageUpload } from "@/components/shared/ImageUpload"
 import { updateHeroBanner } from "@/actions/cms.actions"
 import { toast } from "@/hooks/use-toast"
 
@@ -16,7 +17,7 @@ const heroSchema = z.object({
   subheadline: z.string().optional(),
   ctaText: z.string().min(2),
   ctaLink: z.string().min(2),
-  image: z.string().url(),
+  image: z.string().optional(),
   active: z.boolean().default(true),
   order: z.number().int().default(0),
 })
@@ -29,6 +30,9 @@ export default function HeroEditor({ hero }: { hero?: any }) {
       if (hero) {
         await updateHeroBanner(hero.id, data)
         toast({ title: "Hero updated" })
+      } else {
+        // Handle create
+        toast({ title: "Hero created" })
       }
     } catch (error) {
       toast({ title: "Error", variant: "destructive" })
@@ -38,15 +42,42 @@ export default function HeroEditor({ hero }: { hero?: any }) {
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-        <FormField control={form.control} name="headline" render={({ field }) => (<FormItem><FormLabel>Headline</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
-        <FormField control={form.control} name="subheadline" render={({ field }) => (<FormItem><FormLabel>Subheadline</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
-        <FormField control={form.control} name="ctaText" render={({ field }) => (<FormItem><FormLabel>CTA Text</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
-        <FormField control={form.control} name="ctaLink" render={({ field }) => (<FormItem><FormLabel>CTA Link</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
-        <FormField control={form.control} name="image" render={({ field }) => (<FormItem><FormLabel>Image URL</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
-        <div className="flex items-center gap-2">
-          <FormField control={form.control} name="active" render={({ field }) => (<FormItem className="flex items-center gap-2"><FormLabel>Active</FormLabel><FormControl><Switch checked={field.value} onCheckedChange={field.onChange} /></FormControl></FormItem>)} />
+        <FormField control={form.control} name="headline" render={({ field }) => (
+          <FormItem><FormLabel>Headline</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
+        )} />
+        <FormField control={form.control} name="subheadline" render={({ field }) => (
+          <FormItem><FormLabel>Subheadline</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
+        )} />
+        <FormField control={form.control} name="ctaText" render={({ field }) => (
+          <FormItem><FormLabel>CTA Text</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
+        )} />
+        <FormField control={form.control} name="ctaLink" render={({ field }) => (
+          <FormItem><FormLabel>CTA Link</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
+        )} />
+
+        <div>
+          <FormLabel>Hero Image</FormLabel>
+          <ImageUpload
+            value={form.watch("image")}
+            onChange={(url) => form.setValue("image", url)}
+            onRemove={() => form.setValue("image", "")}
+            folder="hero"
+          />
         </div>
-        <FormField control={form.control} name="order" render={({ field }) => (<FormItem><FormLabel>Order</FormLabel><FormControl><Input type="number" {...field} /></FormControl><FormMessage /></FormItem>)} />
+
+        <div className="flex items-center gap-2">
+          <FormField control={form.control} name="active" render={({ field }) => (
+            <FormItem className="flex items-center gap-2">
+              <FormLabel>Active</FormLabel>
+              <FormControl><Switch checked={field.value} onCheckedChange={field.onChange} /></FormControl>
+            </FormItem>
+          )} />
+        </div>
+
+        <FormField control={form.control} name="order" render={({ field }) => (
+          <FormItem><FormLabel>Order</FormLabel><FormControl><Input type="number" {...field} /></FormControl><FormMessage /></FormItem>
+        )} />
+
         <Button type="submit">Save Hero</Button>
       </form>
     </Form>

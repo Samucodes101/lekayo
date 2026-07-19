@@ -29,6 +29,10 @@ model User {
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 
+  firebaseUid   String?   @unique
+  phoneVerified Boolean   @default(false)
+  phone         String?   // store normalized phone
+
   accounts      Account[]
   sessions      Session[]
   orders        Order[]
@@ -41,6 +45,15 @@ model User {
   inventoryLogs InventoryLog[]
 
   @@index([email])
+}
+
+model PasswordResetToken {
+  id        String   @id @default(cuid())
+  email     String
+  token     String   @unique
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  used      Boolean  @default(false)
 }
 
 model Account {

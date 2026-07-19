@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Label } from "@/components/ui/label"
 import { Switch } from "@/components/ui/switch"
+import { ImageUpload } from "@/components/shared/ImageUpload"
 import { toast } from "@/hooks/use-toast"
 
 export default function EditorialPage() {
@@ -56,7 +57,15 @@ export default function EditorialPage() {
             <div className="space-y-4">
               <div><Label>Title</Label><Input value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} /></div>
               <div><Label>Body</Label><Textarea value={form.body} onChange={(e) => setForm({ ...form, body: e.target.value })} /></div>
-              <div><Label>Image URL</Label><Input value={form.image} onChange={(e) => setForm({ ...form, image: e.target.value })} /></div>
+              <div>
+                <Label>Image</Label>
+                <ImageUpload
+                  value={form.image}
+                  onChange={(url) => setForm({ ...form, image: url })}
+                  onRemove={() => setForm({ ...form, image: "" })}
+                  folder="editorial"
+                />
+              </div>
               <div><Label>Link (optional)</Label><Input value={form.link} onChange={(e) => setForm({ ...form, link: e.target.value })} /></div>
               <div><Label>Position</Label>
                 <select value={form.position} onChange={(e) => setForm({ ...form, position: e.target.value })} className="w-full border rounded p-2">

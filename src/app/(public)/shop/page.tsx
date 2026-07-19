@@ -19,8 +19,14 @@ export default async function ShopPage({ searchParams }: { searchParams: SearchP
   const skip = (page - 1) * limit
 
   const where: any = { status: "PUBLISHED" }
-  if (searchParams.brand) where.brandId = searchParams.brand
-  if (searchParams.category) where.categoryId = searchParams.category
+  if (searchParams.brand) {
+    const brandIds = searchParams.brand.split(",")
+    where.brandId = { in: brandIds }
+  }
+  if (searchParams.category) {
+    const catIds = searchParams.category.split(",")
+    where.categoryId = { in: catIds }
+  }
   if (searchParams.minPrice || searchParams.maxPrice) {
     where.basePrice = {}
     if (searchParams.minPrice) where.basePrice.gte = Number(searchParams.minPrice)
@@ -36,7 +42,13 @@ export default async function ShopPage({ searchParams }: { searchParams: SearchP
   }
 
   const [products, total, brands, categories] = await Promise.all([
-    prisma.product.findMany({ where, include: { variants: { include: { images: true } }, brand: true }, orderBy, skip, take: limit }),
+    prisma.product.findMany({
+      where,
+      include: { variants: { include: { images: true } }, brand: true },
+      orderBy,
+      skip,
+      take: limit,
+    }),
     prisma.product.count({ where }),
     prisma.brand.findMany({ orderBy: { name: "asc" } }),
     prisma.category.findMany({ orderBy: { name: "asc" } }),
@@ -46,7 +58,7 @@ export default async function ShopPage({ searchParams }: { searchParams: SearchP
     <div className="container mx-auto px-4 py-8">
       <h1 className="text-3xl font-serif mb-6">All Products</h1>
       <div className="flex gap-8">
-        <FilterSidebar brands={brands} categories={categories} onFilterChange={() => {}} />
+        <FilterSidebar brands={brands} categories={categories} />
         <div className="flex-1">
           <div className="flex justify-between items-center mb-6">
             <p className="text-sm text-gray-500">Showing {products.length} of {total} products</p>

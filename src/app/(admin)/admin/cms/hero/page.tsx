@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Label } from "@/components/ui/label"
 import { Switch } from "@/components/ui/switch"
+import { ImageUpload } from "@/components/shared/ImageUpload"
 import { toast } from "@/hooks/use-toast"
 
 export default function HeroPage() {
@@ -59,7 +60,15 @@ export default function HeroPage() {
         <div><Label>Subheadline</Label><Input value={form.subheadline} onChange={(e) => setForm({ ...form, subheadline: e.target.value })} /></div>
         <div><Label>CTA Text</Label><Input value={form.ctaText} onChange={(e) => setForm({ ...form, ctaText: e.target.value })} /></div>
         <div><Label>CTA Link</Label><Input value={form.ctaLink} onChange={(e) => setForm({ ...form, ctaLink: e.target.value })} /></div>
-        <div><Label>Image URL</Label><Input value={form.image} onChange={(e) => setForm({ ...form, image: e.target.value })} /></div>
+        <div>
+          <Label>Hero Image</Label>
+          <ImageUpload
+            value={form.image}
+            onChange={(url) => setForm({ ...form, image: url })}
+            onRemove={() => setForm({ ...form, image: "" })}
+            folder="hero"
+          />
+        </div>
         <div className="flex items-center gap-2">
           <Label>Active</Label>
           <Switch checked={form.active} onCheckedChange={(v) => setForm({ ...form, active: v })} />

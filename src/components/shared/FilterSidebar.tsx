@@ -1,6 +1,7 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
+import { useRouter, useSearchParams } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Slider } from "@/components/ui/slider"
@@ -10,29 +11,59 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/
 interface FilterSidebarProps {
   brands: Array<{ id: string; name: string }>
   categories: Array<{ id: string; name: string }>
-  onFilterChange: (filters: any) => void
 }
 
-export default function FilterSidebar({ brands, categories, onFilterChange }: FilterSidebarProps) {
-  const [selectedBrands, setSelectedBrands] = useState<string[]>([])
-  const [selectedCategories, setSelectedCategories] = useState<string[]>([])
-  const [priceRange, setPriceRange] = useState([0, 5000])
+export default function FilterSidebar({ brands, categories }: FilterSidebarProps) {
+  const router = useRouter()
+  const searchParams = useSearchParams()
+
+  const [selectedBrands, setSelectedBrands] = useState<string[]>(() => {
+    const brandsParam = searchParams.get("brand")
+    return brandsParam ? brandsParam.split(",") : []
+  })
+  const [selectedCategories, setSelectedCategories] = useState<string[]>(() => {
+    const catParam = searchParams.get("category")
+    return catParam ? catParam.split(",") : []
+  })
+  const [priceRange, setPriceRange] = useState<[number, number]>([0, 5000])
+
+  useEffect(() => {
+    const min = searchParams.get("minPrice")
+    const max = searchParams.get("maxPrice")
+    if (min && max) {
+      setPriceRange([Number(min), Number(max)])
+    }
+  }, [searchParams])
+
+  const updateFilters = (brands: string[], categories: string[], price: [number, number]) => {
+    const params = new URLSearchParams(searchParams.toString())
+    if (brands.length > 0) params.set("brand", brands.join(","))
+    else params.delete("brand")
+    if (categories.length > 0) params.set("category", categories.join(","))
+    else params.delete("category")
+    params.set("minPrice", String(price[0]))
+    params.set("maxPrice", String(price[1]))
+    // Reset page to 1
+    params.set("page", "1")
+    router.push(`?${params.toString()}`)
+  }
 
   const handleBrandChange = (brandId: string, checked: boolean) => {
     const updated = checked ? [...selectedBrands, brandId] : selectedBrands.filter(id => id !== brandId)
     setSelectedBrands(updated)
-    onFilterChange({ brands: updated, categories: selectedCategories, priceRange })
+    updateFilters(updated, selectedCategories, priceRange)
   }
 
   const handleCategoryChange = (catId: string, checked: boolean) => {
     const updated = checked ? [...selectedCategories, catId] : selectedCategories.filter(id => id !== catId)
     setSelectedCategories(updated)
-    onFilterChange({ brands: selectedBrands, categories: updated, priceRange })
+    updateFilters(selectedBrands, updated, priceRange)
   }
 
   const handlePriceChange = (value: number[]) => {
-    setPriceRange(value)
-    onFilterChange({ brands: selectedBrands, categories: selectedCategories, priceRange: value })
+    const newRange: [number, number] = [value[0], value[1]]
+    setPriceRange(newRange)
+    updateFilters(selectedBrands, selectedCategories, newRange)
   }
 
   return (
