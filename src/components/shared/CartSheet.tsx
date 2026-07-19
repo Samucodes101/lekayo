@@ -9,8 +9,8 @@ import Link from "next/link"
 import { formatPrice } from "@/lib/utils"
 
 export default function CartSheet() {
-  const { items, getTotalPrice } = useCartStore()
-  const total = getTotalPrice()
+  const { items, getTotal } = useCartStore()
+  const total = getTotal()
 
   return (
     <Sheet>

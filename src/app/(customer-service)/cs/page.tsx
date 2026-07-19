@@ -8,10 +8,10 @@ import { Package, ShoppingBag, Users, Box } from "lucide-react"
 export default async function CustomerServiceDashboard() {
   const session = await getServerSession(authOptions)
   if (!session) redirect("/login")
-  const role = session.user.role
-  if (!["CUSTOMER_SERVICE", "ADMIN", "SUPER_ADMIN"].includes(role)) {
-    redirect("/")
-  }
+const role = session.user.role
+if (!role || !["CUSTOMER_SERVICE", "ADMIN", "SUPER_ADMIN"].includes(role)) {
+  redirect("/")
+}
 
   const cards = [
     { title: "Inventory Lookup", description: "Search product stock", href: "/cs/inventory", icon: Box },
