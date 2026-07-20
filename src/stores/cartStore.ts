@@ -1,6 +1,5 @@
 import { create } from "zustand"
 import { persist } from "zustand/middleware"
-
 export interface CartItem {
   variantId: string
   productId: string
@@ -16,12 +15,11 @@ export interface CartItem {
 interface CartStore {
   items: CartItem[]
   isHydrated: boolean
-  addItem: (item: Omit<CartItem, 'quantity'> & { quantity?: number }) => void
+  addItem: (item: Omit<CartItem, "quantity"> & { quantity?: number }) => void
   removeItem: (variantId: string) => void
   updateQuantity: (variantId: string, quantity: number) => void
   clearCart: () => void
-  mergeGuestCart: (userEmail: string) => Promise<void>
-  syncWithServer: (userEmail: string) => Promise<void>
+  syncWithServer: () => Promise<void>
   getSubtotal: () => number
   getTotal: () => number
   setHydrated: (state: boolean) => void
@@ -32,7 +30,7 @@ export const useCartStore = create<CartStore>()(
     (set, get) => ({
       items: [],
       isHydrated: false,
-      setHydrated: (state: boolean) => set({ isHydrated: state }),
+      setHydrated: (state) => set({ isHydrated: state }),
 
       addItem: (item) =>
         set((state) => {
@@ -46,38 +44,22 @@ export const useCartStore = create<CartStore>()(
               ),
             }
           }
-          return {
-            items: [...state.items, { ...item, quantity: item.quantity || 1 }],
-          }
+          return { items: [...state.items, { ...item, quantity: item.quantity || 1 }] }
         }),
 
       removeItem: (variantId) =>
-        set((state) => ({
-          items: state.items.filter((i) => i.variantId !== variantId),
-        })),
+        set((state) => ({ items: state.items.filter((i) => i.variantId !== variantId) })),
 
       updateQuantity: (variantId, quantity) =>
         set((state) => ({
-          items: state.items.map((i) =>
-            i.variantId === variantId ? { ...i, quantity } : i
-          ),
+          items: state.items.map((i) => (i.variantId === variantId ? { ...i, quantity } : i)),
         })),
 
       clearCart: () => set({ items: [] }),
 
-      mergeGuestCart: async (userEmail: string) => {
-        const { items } = get()
-        if (items.length === 0) return
-        await fetch("/api/cart/merge", {
-          method: "POST",
-          body: JSON.stringify({ items, userEmail }),
-          headers: { "Content-Type": "application/json" },
-        })
-        set({ items: [] })
-      },
-
-      syncWithServer: async (userEmail: string) => {
-        const res = await fetch(`/api/cart?userEmail=${userEmail}`)
+      // No userEmail param needed — server derives user from session, same as your GET route
+      syncWithServer: async () => {
+        const res = await fetch("/api/cart")
         if (res.ok) {
           const serverItems = await res.json()
           set({ items: serverItems })

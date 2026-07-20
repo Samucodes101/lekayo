@@ -16,8 +16,7 @@ interface WishlistStore {
   removeItem: (productId: string) => void
   isInWishlist: (productId: string) => boolean
   clearWishlist: () => void
-  mergeGuestWishlist: (userEmail: string) => Promise<void>
-  syncWishlistWithServer: (userEmail: string) => Promise<void>
+  syncWishlistWithServer: () => Promise<void>
   setHydrated: (state: boolean) => void
 }
 
@@ -43,19 +42,9 @@ export const useWishlistStore = create<WishlistStore>()(
 
       clearWishlist: () => set({ items: [] }),
 
-      mergeGuestWishlist: async (userEmail: string) => {
-        const { items } = get()
-        if (items.length === 0) return
-        await fetch("/api/wishlist/merge", {
-          method: "POST",
-          body: JSON.stringify({ items, userEmail }),
-          headers: { "Content-Type": "application/json" },
-        })
-        set({ items: [] })
-      },
-
-      syncWishlistWithServer: async (userEmail: string) => {
-        const res = await fetch(`/api/wishlist?userEmail=${userEmail}`)
+      // No userEmail param — server derives the user from the session, never trust a client-passed email
+      syncWishlistWithServer: async () => {
+        const res = await fetch("/api/wishlist")
         if (res.ok) {
           const serverItems = await res.json()
           set({ items: serverItems })

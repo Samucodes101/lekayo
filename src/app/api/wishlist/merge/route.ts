@@ -5,10 +5,7 @@ import { authOptions } from "@/lib/auth"
 import { z } from "zod"
 
 const mergeSchema = z.object({
-  items: z.array(z.object({
-    id: z.string().cuid(),
-  })),
-  mergeToken: z.string().optional(),
+  items: z.array(z.object({ id: z.string().cuid() })),
 })
 
 export async function POST(req: NextRequest) {
@@ -17,65 +14,44 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
   }
 
-  const body = await req.json()
-  const parsed = mergeSchema.safeParse(body)
+  const parsed = mergeSchema.safeParse(await req.json())
   if (!parsed.success) {
     return NextResponse.json({ error: parsed.error.message }, { status: 400 })
   }
   const { items } = parsed.data
 
-  const user = await prisma.user.findUnique({
-    where: { email: session.user.email },
-  })
+  const user = await prisma.user.findUnique({ where: { email: session.user.email } })
   if (!user) {
     return NextResponse.json({ error: "User not found" }, { status: 404 })
   }
 
-  // Validate product ids exist and published
-  const productIds = items.map(i => i.id)
+  // Only merge products that actually exist and are published
+  const productIds = items.map((i) => i.id)
   const validProducts = await prisma.product.findMany({
     where: { id: { in: productIds }, status: "PUBLISHED" },
     select: { id: true },
   })
-  const validIds = new Set(validProducts.map(p => p.id))
-  const invalidItems = items.filter(i => !validIds.has(i.id))
-  if (invalidItems.length > 0) {
-    return NextResponse.json({
-      error: "Some products are invalid or not available",
-      invalid: invalidItems,
-    }, { status: 400 })
-  }
+  const validIds = new Set(validProducts.map((p) => p.id))
 
-  // Use createMany with skipDuplicates (requires unique constraint)
-  await prisma.$transaction(async (tx) => {
-    await tx.wishlistItem.createMany({
-      data: items.map((item) => ({
-        userId: user.id,
-        productId: item.id,
-      })),
-      skipDuplicates: true,
-    })
+  await prisma.wishlistItem.createMany({
+    data: items
+      .filter((i) => validIds.has(i.id))
+      .map((i) => ({ userId: user.id, productId: i.id })),
+    skipDuplicates: true, // relies on your existing @@unique([userId, productId])
   })
 
-  // Return updated wishlist
   const updatedWishlist = await prisma.wishlistItem.findMany({
     where: { userId: user.id },
-    include: {
-      product: {
-        include: {
-          variants: { include: { images: true } },
-        },
-      },
-    },
+    include: { product: true },
   })
 
   const wishlistItems = updatedWishlist.map((w) => ({
-    id: w.productId,
+    id: w.product.id,
     name: w.product.name,
     slug: w.product.slug,
-    price: w.product.salePrice || w.product.basePrice,
-    image: w.product.variants[0]?.images[0]?.url || "/placeholder.png",
+    price: w.product.salePrice ?? w.product.basePrice,
+    image: "", // fill from your product/variant image relation if you display one here
   }))
 
-  return NextResponse.json({ success: true, wishlist: wishlistItems })
+  return NextResponse.json(wishlistItems)
 }

@@ -3,34 +3,56 @@
 import { useSession } from "next-auth/react"
 import { useEffect, useRef } from "react"
 import { useCartStore } from "@/stores/cartStore"
+import { useGuestCartStore } from "@/stores/guestCartStore"
 import { useWishlistStore } from "@/stores/wishlistStore"
+import { useGuestWishlistStore } from "@/stores/guestWishlistStore"
 
 export function SessionSync() {
   const { data: session, status } = useSession()
-  const { mergeGuestCart, syncWithServer } = useCartStore()
-  const { mergeGuestWishlist, syncWishlistWithServer } = useWishlistStore()
+  const syncWithServer = useCartStore((s) => s.syncWithServer)
+  const syncWishlistWithServer = useWishlistStore((s) => s.syncWishlistWithServer)
   const mergedRef = useRef(false)
 
   useEffect(() => {
-    // Reset merge flag on logout
     if (status === "unauthenticated") {
       mergedRef.current = false
       return
     }
 
-    // Only run once per authenticated session
     if (status === "authenticated" && session?.user?.email && !mergedRef.current) {
       mergedRef.current = true
+
       const sync = async () => {
-        // Merge guest cart into DB, then sync back
-        await mergeGuestCart(session.user.email!)
-        await syncWithServer(session.user.email!)
-        await mergeGuestWishlist(session.user.email!)
-        await syncWishlistWithServer(session.user.email!)
+        const guestItems = useGuestCartStore.getState().items
+        if (guestItems.length > 0) {
+          const res = await fetch("/api/cart/merge", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ items: guestItems }),
+          })
+          if (res.ok) {
+            useGuestCartStore.getState().clear()
+          }
+        }
+        await syncWithServer()
+
+        const guestWishlistItems = useGuestWishlistStore.getState().items
+        if (guestWishlistItems.length > 0) {
+          const res = await fetch("/api/wishlist/merge", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ items: guestWishlistItems }),
+          })
+          if (res.ok) {
+            useGuestWishlistStore.getState().clear()
+          }
+        }
+        await syncWishlistWithServer()
       }
+
       sync().catch(console.error)
     }
-  }, [status, session, mergeGuestCart, syncWithServer, mergeGuestWishlist, syncWishlistWithServer])
+  }, [status, session, syncWithServer, syncWishlistWithServer])
 
   return null
 }
