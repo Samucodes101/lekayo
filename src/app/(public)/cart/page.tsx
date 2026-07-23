@@ -1,13 +1,13 @@
 "use client"
 
-import { useCartStore } from "@/stores/cartStore"
+import { useActiveCart } from "@/hooks/useActiveCart"
 import CartItem from "@/components/shared/CartItem"
 import OrderSummary from "@/components/shared/OrderSummary"
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
 
 export default function CartPage() {
-  const { items, getSubtotal, getTotal } = useCartStore()
+  const { items, getSubtotal, getTotal } = useActiveCart()
 
   if (items.length === 0) {
     return (
@@ -28,12 +28,7 @@ export default function CartPage() {
           ))}
         </div>
         <div>
-          <OrderSummary
-            subtotal={getSubtotal()}
-            discount={0}
-            shipping={0}
-            total={getTotal()}
-          />
+          <OrderSummary subtotal={getSubtotal()} discount={0} shipping={0} total={getTotal()} />
           <Button asChild className="w-full mt-4">
             <Link href="/checkout">Proceed to Checkout</Link>
           </Button>

@@ -15,7 +15,7 @@ export default function ShopByCategory({ categories }: ShopByCategoryProps) {
       <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-8">
         {categories.map((category) => (
           <Link key={category.id} href={`/shop/${category.slug}`} className="group text-center">
-            <div className="aspect-square bg-gray-100 rounded-full overflow-hidden flex items-center justify-center p-4 transition group-hover:shadow-lg">
+            <div className="aspect-square bg-gray-50 rounded-sm overflow-hidden flex items-center justify-center p-4 transition group-hover:shadow-sm">
               {category.banner ? (
                 <Image src={category.banner} alt={category.name} width={120} height={120} className="object-contain" />
               ) : (

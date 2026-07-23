@@ -2,7 +2,7 @@
 
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
-import { useWishlistStore } from "@/stores/wishlistStore"
+import { useActiveWishlist } from "@/hooks/useActiveWishlist"
 import { Heart } from "lucide-react"
 import { toast } from "@/hooks/use-toast"
 
@@ -12,7 +12,7 @@ interface WishlistButtonProps {
 }
 
 export default function WishlistButton({ productId, size = "default" }: WishlistButtonProps) {
-  const { addItem, removeItem, isInWishlist } = useWishlistStore()
+  const { addItem, removeItem, isInWishlist } = useActiveWishlist()
   const inWishlist = isInWishlist(productId)
   const [loading, setLoading] = useState(false)
 
@@ -23,7 +23,6 @@ export default function WishlistButton({ productId, size = "default" }: Wishlist
         removeItem(productId)
         toast({ title: "Removed from wishlist" })
       } else {
-        // Need to fetch product details first
         const res = await fetch(`/api/products/${productId}`)
         const product = await res.json()
         addItem(product)

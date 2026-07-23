@@ -8,12 +8,15 @@ interface GuestCartStore {
   removeItem: (variantId: string) => void
   updateQuantity: (variantId: string, quantity: number) => void
   clear: () => void
+  getSubtotal: () => number
+  getTotal: () => number
 }
 
 export const useGuestCartStore = create<GuestCartStore>()(
   persist(
-    (set) => ({
+    (set, get) => ({
       items: [],
+
       addItem: (item) =>
         set((state) => {
           const existing = state.items.find((i) => i.variantId === item.variantId)
@@ -28,14 +31,20 @@ export const useGuestCartStore = create<GuestCartStore>()(
           }
           return { items: [...state.items, { ...item, quantity: item.quantity || 1 }] }
         }),
+
       removeItem: (variantId) =>
         set((state) => ({ items: state.items.filter((i) => i.variantId !== variantId) })),
+
       updateQuantity: (variantId, quantity) =>
         set((state) => ({
           items: state.items.map((i) => (i.variantId === variantId ? { ...i, quantity } : i)),
         })),
+
       clear: () => set({ items: [] }),
+
+      getSubtotal: () => get().items.reduce((sum, i) => sum + i.price * i.quantity, 0),
+      getTotal: () => get().items.reduce((sum, i) => sum + i.price * i.quantity, 0),
     }),
-    { name: "guest-cart-storage" } // DIFFERENT key from "cart-storage" — this is what makes it work
+    { name: "guest-cart-storage" }
   )
 )

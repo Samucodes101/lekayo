@@ -1,12 +1,12 @@
 "use client"
 
-import { useWishlistStore } from "@/stores/wishlistStore"
+import { useActiveWishlist } from "@/hooks/useActiveWishlist"
 import ProductGrid from "@/components/shared/ProductGrid"
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
 
 export default function WishlistPage() {
-  const { items } = useWishlistStore()
+  const { items } = useActiveWishlist()
 
   if (items.length === 0) {
     return (

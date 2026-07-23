@@ -15,7 +15,7 @@ export default function ShopByBrand({ brands }: ShopByBrandProps) {
       <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-8">
         {brands.map((brand) => (
           <Link key={brand.id} href={`/brands/${brand.slug}`} className="group">
-            <div className="aspect-square bg-gray-100 rounded-full overflow-hidden flex items-center justify-center p-4 transition group-hover:shadow-lg">
+            <div className="aspect-square bg-gray-50 rounded-sm overflow-hidden flex items-center justify-center p-4 transition group-hover:shadow-sm">
               {brand.logo ? (
                 <Image src={brand.logo} alt={brand.name} width={120} height={120} className="object-contain" />
               ) : (

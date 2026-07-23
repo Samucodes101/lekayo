@@ -2,7 +2,7 @@
 
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
-import { useCartStore } from "@/stores/cartStore"
+import { useActiveCart } from "@/hooks/useActiveCart"
 import { toast } from "@/hooks/use-toast"
 import { ShoppingBag } from "lucide-react"
 
@@ -29,7 +29,7 @@ export default function AddToCartButton({
   color,
   size,
 }: AddToCartButtonProps) {
-  const addItem = useCartStore((state) => state.addItem)
+  const { addItem } = useActiveCart()
   const [loading, setLoading] = useState(false)
 
   const handleAdd = async () => {
