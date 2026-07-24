@@ -1,10 +1,9 @@
 import { NextResponse } from "next/server"
-import { prisma } from "@/lib/db"
+import { getCategories } from "@/lib/data"
+
+export const dynamic = "force-dynamic"
 
 export async function GET() {
-  const categories = await prisma.category.findMany({
-    include: { subcategories: true },
-    orderBy: { name: "asc" },
-  })
+  const categories = await getCategories()
   return NextResponse.json(categories)
 }

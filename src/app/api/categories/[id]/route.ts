@@ -1,14 +1,13 @@
 import { NextRequest, NextResponse } from "next/server"
-import { prisma } from "@/lib/db"
+import { getCategoryById } from "@/lib/data"
+
+export const dynamic = "force-dynamic"
 
 export async function GET(
   req: NextRequest,
   { params }: { params: { id: string } }
 ) {
-  const category = await prisma.category.findUnique({
-    where: { id: params.id },
-    include: { subcategories: true },
-  })
+  const category = await getCategoryById(params.id)
   if (!category) {
     return NextResponse.json({ error: "Category not found" }, { status: 404 })
   }

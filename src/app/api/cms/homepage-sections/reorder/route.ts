@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/db"
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth"
+import { DATA_TAGS } from "@/lib/data"
+import { revalidateTag } from "next/cache"
 
 export async function POST(req: NextRequest) {
   const session = await getServerSession(authOptions)
@@ -12,5 +14,6 @@ export async function POST(req: NextRequest) {
       prisma.homepageSection.update({ where: { id }, data: { order } })
     )
   )
+  revalidateTag(DATA_TAGS.homepageCms)
   return NextResponse.json({ success: true })
 }

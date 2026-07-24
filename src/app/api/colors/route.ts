@@ -3,9 +3,13 @@ import { prisma } from "@/lib/db"
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth"
 import { Role } from "@prisma/client"
+import { DATA_TAGS, getColors } from "@/lib/data"
+import { revalidateTag } from "next/cache"
+
+export const dynamic = "force-dynamic"
 
 export async function GET() {
-  const colors = await prisma.color.findMany({ orderBy: { name: "asc" } })
+  const colors = await getColors()
   return NextResponse.json(colors)
 }
 
@@ -16,6 +20,7 @@ export async function POST(req: NextRequest) {
   }
   const data = await req.json()
   const color = await prisma.color.create({ data })
+  revalidateTag(DATA_TAGS.colors)
   return NextResponse.json(color)
 }
 
@@ -26,6 +31,7 @@ export async function PUT(req: NextRequest) {
   }
   const { id, ...data } = await req.json()
   const color = await prisma.color.update({ where: { id }, data })
+  revalidateTag(DATA_TAGS.colors)
   return NextResponse.json(color)
 }
 
@@ -37,5 +43,6 @@ export async function DELETE(req: NextRequest) {
   const id = req.nextUrl.searchParams.get("id")
   if (!id) return NextResponse.json({ error: "Missing id" }, { status: 400 })
   await prisma.color.delete({ where: { id } })
+  revalidateTag(DATA_TAGS.colors)
   return NextResponse.json({ success: true })
 }

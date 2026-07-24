@@ -1,9 +1,9 @@
 import { NextResponse } from "next/server"
-import { prisma } from "@/lib/db"
+import { getSizes } from "@/lib/data"
+
+export const dynamic = "force-dynamic"
 
 export async function GET() {
-  const sizeSystems = await prisma.sizeSystem.findMany({
-    orderBy: { name: "asc" },
-  })
+  const sizeSystems = await getSizes()
   return NextResponse.json(sizeSystems)
 }

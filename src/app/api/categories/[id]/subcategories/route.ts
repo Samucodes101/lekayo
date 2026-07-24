@@ -3,16 +3,17 @@ import { prisma } from "@/lib/db"
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth"
 import { Role } from "@prisma/client"
+import { DATA_TAGS, getSubcategoriesByCategory } from "@/lib/data"
+import { revalidateTag } from "next/cache"
+
+export const dynamic = "force-dynamic"
 
 // GET all subcategories for a category
 export async function GET(
   req: NextRequest,
   { params }: { params: { id: string } }
 ) {
-  const subcategories = await prisma.subcategory.findMany({
-    where: { categoryId: params.id },
-    orderBy: { name: "asc" },
-  })
+  const subcategories = await getSubcategoriesByCategory(params.id)
   return NextResponse.json(subcategories)
 }
 
@@ -39,6 +40,8 @@ export async function POST(
       categoryId: params.id,
     },
   })
+  revalidateTag(DATA_TAGS.subcategories)
+  revalidateTag(DATA_TAGS.categories)
   return NextResponse.json(subcategory)
 }
 
@@ -61,6 +64,8 @@ export async function PUT(
     where: { id },
     data: { name, slug, description },
   })
+  revalidateTag(DATA_TAGS.subcategories)
+  revalidateTag(DATA_TAGS.categories)
   return NextResponse.json(subcategory)
 }
 
@@ -82,5 +87,7 @@ export async function DELETE(
   await prisma.subcategory.delete({
     where: { id: subcategoryId },
   })
+  revalidateTag(DATA_TAGS.subcategories)
+  revalidateTag(DATA_TAGS.categories)
   return NextResponse.json({ success: true })
 }
