@@ -1,32 +1,3 @@
-// import Image from "next/image"
-// import { Button } from "@/components/ui/button"
-// import Link from "next/link"
-
-// interface HeroBannerProps {
-//   headline: string
-//   subheadline?: string | null
-//   ctaText: string
-//   ctaLink: string
-//   image: string
-// }
-
-// export default function HeroBanner({ headline, subheadline, ctaText, ctaLink, image }: HeroBannerProps) {
-//   return (
-//     <div className="relative h-[600px] w-full">
-//       <Image src={image} alt={headline} fill className="object-cover" priority />
-//       <div className="absolute inset-0 bg-black/30 flex items-center justify-center">
-//         <div className="text-center text-white space-y-4 max-w-2xl px-4">
-//           <h1 className="text-5xl font-serif font-bold">{headline}</h1>
-//           {subheadline && <p className="text-xl">{subheadline}</p>}
-//           <Button asChild size="lg" className="bg-white text-black hover:bg-gray-100">
-//             <Link href={ctaLink}>{ctaText}</Link>
-//           </Button>
-//         </div>
-//       </div>
-//     </div>
-//   )
-// }
-
 import Image from "next/image"
 import Link from "next/link"
 import { ArrowUpRight } from "lucide-react"
@@ -50,7 +21,6 @@ export default function HeroBanner({
 }: HeroBannerProps) {
   return (
     <div className="group relative h-[85vh] min-h-[560px] w-full overflow-hidden bg-black">
-      {/* Image with slow zoom-in */}
       <Image
         src={image}
         alt={headline}
@@ -59,10 +29,8 @@ export default function HeroBanner({
         className="object-cover object-center scale-105 transition-transform duration-[6000ms] ease-out group-hover:scale-110 motion-safe:animate-[kenburns_10s_ease-out_forwards]"
       />
 
-      {/* Gradient overlay — darker at bottom, clear at top */}
       <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-black/10" />
 
-      {/* Content, bottom-anchored like Garm Island */}
       <div className="relative z-10 flex h-full w-full flex-col justify-end px-6 pb-16 sm:px-12 sm:pb-20 lg:px-20">
         <div className="max-w-2xl space-y-5">
           {eyebrow && (
@@ -96,31 +64,9 @@ export default function HeroBanner({
         </div>
       </div>
 
-      {/* Scroll cue */}
       <div className="absolute bottom-6 left-1/2 z-10 hidden -translate-x-1/2 sm:block">
         <div className="h-8 w-px bg-white/40 animate-pulse" />
       </div>
-
-      <style jsx global>{`
-        @keyframes fadeUp {
-          from {
-            opacity: 0;
-            transform: translateY(16px);
-          }
-          to {
-            opacity: 1;
-            transform: translateY(0);
-          }
-        }
-        @keyframes kenburns {
-          from {
-            transform: scale(1.05);
-          }
-          to {
-            transform: scale(1);
-          }
-        }
-      `}</style>
     </div>
   )
 }
