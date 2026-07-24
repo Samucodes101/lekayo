@@ -10,4 +10,4 @@ export async function submitWholesaleApplication(data: any) {
 
   const user = await prisma.user.findUnique({ where: { email: session.user.email! } })
   return prisma.wholesaleApplication.create({ data: { ...data, userId: user!.id } })
-}
+} 

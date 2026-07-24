@@ -21,8 +21,8 @@ import {
   ChevronDown
 } from "lucide-react"
 import { cn } from "@/lib/utils"
+import Image from "next/image"
 
-// This will be populated from the database
 interface Category {
   id: string
   name: string
@@ -30,18 +30,24 @@ interface Category {
   subcategories: { id: string; name: string; slug: string }[]
 }
 
-interface NavbarProps {
-  categories?: Category[]
+interface Brand {
+  id: string
+  name: string
+  slug: string
 }
 
-export default function Navbar({ categories = [] }: NavbarProps) {
+interface NavbarProps {
+  categories?: Category[]
+  brands?: Brand[]
+}
+
+export default function Navbar({ categories = [], brands = [] }: NavbarProps) {
   const { data: session } = useSession()
   const cartItems = useCartStore((state) => state.items)
   const wishlistItems = useWishlistStore((state) => state.items)
   const clearCart = useCartStore((state) => state.clearCart)
   const clearWishlist = useWishlistStore((state) => state.clearWishlist)
   const [scrolled, setScrolled] = useState(false)
-  const [megaMenuOpen, setMegaMenuOpen] = useState(false)
 
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 20)
@@ -58,26 +64,19 @@ export default function Navbar({ categories = [] }: NavbarProps) {
     signOut({ callbackUrl: "/" })
   }
 
-const role = session?.user?.role as string
-let dashboardLink = null
-if (role === "SUPER_ADMIN" || role === "ADMIN") {
-  dashboardLink = { href: "/admin", label: "Admin Dashboard", icon: LayoutDashboard }
-} else if (role === "CUSTOMER_SERVICE") {
-  dashboardLink = { href: "/cs", label: "Customer Service", icon: Users }
-} else if (role === "INVENTORY_MANAGER") {
-  dashboardLink = { href: "/admin/inventory", label: "Inventory", icon: Package }
-} else if (role === "MARKETING_MANAGER") {
-  dashboardLink = { href: "/admin/marketing", label: "Marketing", icon: Megaphone }
-} else if (role === "DEVELOPER") {
-  dashboardLink = { href: "/dev", label: "Developer", icon: Terminal }
-}
-
-  const navLinks = [
-    { name: "Home", href: "/" },
-    { name: "Shop", href: "/shop", hasDropdown: true },
-    { name: "Brands", href: "/brands" },
-    { name: "Wholesale", href: "/wholesale" },
-  ]
+  const role = session?.user?.role as string
+  let dashboardLink = null
+  if (role === "SUPER_ADMIN" || role === "ADMIN") {
+    dashboardLink = { href: "/admin", label: "Admin Dashboard", icon: LayoutDashboard }
+  } else if (role === "CUSTOMER_SERVICE") {
+    dashboardLink = { href: "/cs", label: "Customer Service", icon: Users }
+  } else if (role === "INVENTORY_MANAGER") {
+    dashboardLink = { href: "/admin/inventory", label: "Inventory", icon: Package }
+  } else if (role === "MARKETING_MANAGER") {
+    dashboardLink = { href: "/admin/marketing", label: "Marketing", icon: Megaphone }
+  } else if (role === "DEVELOPER") {
+    dashboardLink = { href: "/dev", label: "Developer", icon: Terminal }
+  }
 
   return (
     <header
@@ -86,63 +85,86 @@ if (role === "SUPER_ADMIN" || role === "ADMIN") {
         scrolled ? "bg-white/95 backdrop-blur shadow-sm" : "bg-white"
       )}
     >
-      <div className="container mx-auto flex h-16 items-center justify-between px-4">
+      <div className="flex h-16 items-center justify-between px-8 lg:px-16">
         {/* Logo */}
-        <Link href="/" className="text-2xl font-serif font-bold tracking-tight shrink-0">
-          LEKAYO
+        <Link href="/" className="tracking-tight shrink-0">
+          <Image src="/lekayoLogo.png" alt="Lekayo" width={80} height={40} priority />
         </Link>
 
         {/* Desktop Navigation */}
-        <nav className="hidden lg:flex items-center gap-6">
-          {navLinks.map((link) => (
-            <div key={link.href} className="relative group">
-              {link.hasDropdown ? (
-                <>
-                  <button
-                    onClick={() => setMegaMenuOpen(!megaMenuOpen)}
-                    className="text-sm font-medium hover:text-gray-600 transition flex items-center gap-1"
-                  >
-                    Shop
-                    <ChevronDown className="h-3 w-3" />
-                  </button>
-                  {/* Mega Menu Dropdown */}
-                  {megaMenuOpen && categories.length > 0 && (
-                    <div 
-                      className="absolute left-0 top-full mt-2 w-screen max-w-6xl -translate-x-1/3 bg-white shadow-xl rounded-lg p-6 grid grid-cols-4 gap-6 border"
-                      onMouseLeave={() => setMegaMenuOpen(false)}
+        <nav className="hidden lg:flex items-center gap-8">
+          <Link href="/" className="text-sm font-medium hover:text-gray-600 transition">
+            Home
+          </Link>
+
+          {/* Shop — wide mega menu, opens on hover */}
+          <div className="relative group/shop">
+            <button className="text-sm font-medium hover:text-gray-600 transition flex items-center gap-1 py-6">
+              Shop
+              <ChevronDown className="h-3 w-3" />
+            </button>
+            {categories.length > 0 && (
+              <div className="absolute left-1/2 -translate-x-1/2 top-full w-screen max-w-7xl bg-white shadow-xl rounded-lg p-6 grid grid-cols-4 gap-6 border opacity-0 invisible translate-y-1 group-hover/shop:opacity-100 group-hover/shop:visible group-hover/shop:translate-y-0 transition-all duration-150">
+                {categories.map((category) => (
+                  <div key={category.id}>
+                    <Link
+                      href={`/shop/${category.slug}`}
+                      className="font-semibold text-sm hover:text-gray-600 block mb-2"
                     >
-                      {categories.map((category) => (
-                        <div key={category.id}>
+                      {category.name}
+                    </Link>
+                    <ul className="space-y-1">
+                      {category.subcategories.map((sub) => (
+                        <li key={sub.id}>
                           <Link
-                            href={`/shop/${category.slug}`}
-                            className="font-semibold text-sm hover:text-gray-600 block mb-2"
+                            href={`/shop/${category.slug}/${sub.slug}`}
+                            className="text-sm text-gray-600 hover:text-black transition"
                           >
-                            {category.name}
+                            {sub.name}
                           </Link>
-                          <ul className="space-y-1">
-                            {category.subcategories.map((sub) => (
-                              <li key={sub.id}>
-                                <Link
-                                  href={`/shop/${category.slug}/${sub.slug}`}
-                                  className="text-sm text-gray-600 hover:text-black transition"
-                                >
-                                  {sub.name}
-                                </Link>
-                              </li>
-                            ))}
-                          </ul>
-                        </div>
+                        </li>
                       ))}
-                    </div>
-                  )}
-                </>
-              ) : (
-                <Link href={link.href} className="text-sm font-medium hover:text-gray-600 transition">
-                  {link.name}
+                    </ul>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Brands — narrow dropdown, names only, opens on hover */}
+          <div className="relative group/brands">
+            <button className="text-sm font-medium hover:text-gray-600 transition flex items-center gap-1 py-6">
+              Brands
+              <ChevronDown className="h-3 w-3" />
+            </button>
+            {brands.length > 0 && (
+              <div className="absolute left-0 top-full min-w-[200px] bg-white shadow-xl rounded-lg p-3 border opacity-0 invisible translate-y-1 group-hover/brands:opacity-100 group-hover/brands:visible group-hover/brands:translate-y-0 transition-all duration-150">
+                <ul className="space-y-1">
+                  {brands.map((brand) => (
+                    <li key={brand.id}>
+                      <Link
+                        href={`/brands/${brand.slug}`}
+                        className="block text-sm text-gray-600 hover:text-black hover:bg-gray-50 rounded px-2 py-1.5 transition"
+                      >
+                        {brand.name}
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+                <DropdownMenuSeparator className="my-2" />
+                <Link
+                  href="/brands"
+                  className="block text-sm font-medium px-2 py-1.5 hover:bg-gray-50 rounded transition"
+                >
+                  View All Brands
                 </Link>
-              )}
-            </div>
-          ))}
+              </div>
+            )}
+          </div>
+
+          <Link href="/wholesale" className="text-sm font-medium hover:text-gray-600 transition">
+            Wholesale
+          </Link>
         </nav>
 
         {/* Icons & User Menu */}
@@ -217,11 +239,10 @@ if (role === "SUPER_ADMIN" || role === "ADMIN") {
             </SheetTrigger>
             <SheetContent>
               <nav className="flex flex-col gap-4 mt-8">
-                {navLinks.map((link) => (
-                  <Link key={link.href} href={link.href} className="text-lg font-medium">
-                    {link.name}
-                  </Link>
-                ))}
+                <Link href="/" className="text-lg font-medium">Home</Link>
+                <Link href="/shop" className="text-lg font-medium">Shop</Link>
+                <Link href="/brands" className="text-lg font-medium">Brands</Link>
+                <Link href="/wholesale" className="text-lg font-medium">Wholesale</Link>
                 {dashboardLink && (
                   <Link href={dashboardLink.href} className="text-lg font-medium flex items-center gap-2">
                     <dashboardLink.icon className="h-4 w-4" />

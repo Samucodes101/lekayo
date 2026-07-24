@@ -1,4 +1,5 @@
 import Link from "next/link"
+import Image from "next/image"
 
 const footerLinks = {
   Shop: [
@@ -28,7 +29,13 @@ export default function Footer() {
       <div className="container mx-auto px-4 py-12">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
           <div>
-            <h3 className="text-2xl font-serif font-bold mb-4">LEKAYO</h3>
+            <Image
+              src="/lekayoLogo.png"
+              alt="Lekayo"
+              width={140}
+              height={40}
+              className="mb-4 brightness-0 invert" // makes a dark logo render white on the dark footer bg
+            />
             <p className="text-gray-400 text-sm">Luxury fashion for the discerning.</p>
           </div>
           {Object.entries(footerLinks).map(([title, links]) => (
