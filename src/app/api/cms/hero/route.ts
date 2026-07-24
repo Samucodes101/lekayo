@@ -29,3 +29,4 @@ export async function PUT(req: NextRequest) {
   revalidateTag(DATA_TAGS.homepageCms)
   return NextResponse.json(hero)
 }
+
