@@ -4,7 +4,9 @@ import { useState, useEffect } from "react"
 import Link from "next/link"
 import { useSession, signOut } from "next-auth/react"
 import { useCartStore } from "@/stores/cartStore"
+import { useGuestCartStore } from "@/stores/guestCartStore"
 import { useWishlistStore } from "@/stores/wishlistStore"
+import { useActiveCart } from "@/hooks/useActiveCart"
 import { Button } from "@/components/ui/button"
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
 import {
@@ -43,9 +45,8 @@ interface NavbarProps {
 
 export default function Navbar({ categories = [], brands = [] }: NavbarProps) {
   const { data: session } = useSession()
-  const cartItems = useCartStore((state) => state.items)
+  const { items: cartItems } = useActiveCart()
   const wishlistItems = useWishlistStore((state) => state.items)
-  const clearCart = useCartStore((state) => state.clearCart)
   const clearWishlist = useWishlistStore((state) => state.clearWishlist)
   const [scrolled, setScrolled] = useState(false)
 
@@ -59,7 +60,9 @@ export default function Navbar({ categories = [], brands = [] }: NavbarProps) {
   const wishlistCount = wishlistItems.length
 
   const handleSignOut = () => {
-    clearCart()
+    // Clear both auth and guest cart stores to ensure client-side state is reset
+    useCartStore.getState().clearCart()
+    useGuestCartStore.getState().clear()
     clearWishlist()
     signOut({ callbackUrl: "/" })
   }

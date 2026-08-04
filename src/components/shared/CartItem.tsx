@@ -2,7 +2,7 @@
 
 import Image from "next/image"
 import { CartItem as CartItemType } from "@/stores/cartStore"
-import { useCartStore } from "@/stores/cartStore"
+import { useActiveCart } from "@/hooks/useActiveCart"
 import { Button } from "@/components/ui/button"
 import { Trash2 } from "lucide-react"
 import QuantitySelector from "./QuantitySelector"
@@ -13,7 +13,7 @@ interface CartItemProps {
 }
 
 export default function CartItem({ item }: CartItemProps) {
-  const { updateQuantity, removeItem } = useCartStore()
+  const { updateQuantity, removeItem } = useActiveCart()
 
   return (
     <div className="flex gap-4">

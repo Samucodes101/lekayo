@@ -3,13 +3,13 @@
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet"
 import { Button } from "@/components/ui/button"
 import { ShoppingBag } from "lucide-react"
-import { useCartStore } from "@/stores/cartStore"
+import { useActiveCart } from "@/hooks/useActiveCart"
 import CartItem from "./CartItem"
 import Link from "next/link"
 import { formatPrice } from "@/lib/utils"
 
 export default function CartSheet() {
-  const { items, getTotal } = useCartStore()
+  const { items, getTotal } = useActiveCart()
   const total = getTotal()
 
   return (
