@@ -1,6 +1,6 @@
-import { useCartStore } from "@/stores/cartStore"
+﻿import { useActiveCart } from "@/hooks/useActiveCart"
 
 export function useCart() {
-  const { items, addItem, removeItem, updateQuantity, clearCart } = useCartStore()
-  return { items, addItem, removeItem, updateQuantity, clearCart }
+  // Proxy to the active cart abstraction so callers don't need to know guest vs auth
+  return useActiveCart()
 }
