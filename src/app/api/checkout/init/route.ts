@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { initializePayment } from "@/lib/paystack"
+import { initializeFlutterwavePayment } from "@/lib/flutterwave"
 import { prisma } from "@/lib/db"
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth"
@@ -10,7 +11,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
   }
 
-  const { email, firstName, lastName, address, city, state, postalCode, phone, items, total } = await req.json()
+  const { email, firstName, lastName, address, city, state, postalCode, phone, items, total, paymentGateway } = await req.json()
 
   if (!email || !firstName || !lastName || !address || !city || !state || !postalCode || !phone || !items || !total) {
     return NextResponse.json({ error: "Missing required fields" }, { status: 400 })
@@ -58,14 +59,28 @@ export async function POST(req: NextRequest) {
     },
   })
 
-  const payment = await initializePayment(email, total, { orderId: order.id })
+  const paymentData = {
+    email,
+    firstName,
+    lastName,
+    phone,
+    orderId: order.id,
+  }
+
+  let payment
+  if (paymentGateway === "FLUTTERWAVE") {
+    payment = await initializeFlutterwavePayment(email, total, paymentData)
+  } else {
+    payment = await initializePayment(email, total, paymentData)
+  }
+
   if (!payment || !payment.authorization_url) {
     return NextResponse.json({ error: "Payment initialization failed" }, { status: 500 })
   }
 
   await prisma.order.update({
     where: { id: order.id },
-    data: { paymentReference: payment.reference },
+    data: { paymentReference: payment.reference, paymentMethod: paymentGateway || "PAYSTACK" },
   })
 
   return NextResponse.json({

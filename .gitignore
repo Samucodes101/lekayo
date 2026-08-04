@@ -6,6 +6,9 @@
 
 # testing
 /coverage
+**/*.test.*
+**/*.spec.*
+__tests__/
 
 # next.js
 /.next/
