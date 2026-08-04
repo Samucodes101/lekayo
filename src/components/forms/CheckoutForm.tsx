@@ -6,6 +6,7 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import { z } from "zod"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
 import { useCartStore } from "@/stores/cartStore"
 import { toast } from "@/hooks/use-toast"
@@ -19,6 +20,7 @@ const checkoutSchema = z.object({
   state: z.string().min(2),
   postalCode: z.string().min(3),
   phone: z.string().min(10),
+  paymentGateway: z.enum(["PAYSTACK", "FLUTTERWAVE"]).optional(),
 })
 
 type CheckoutValues = z.infer<typeof checkoutSchema>
@@ -26,7 +28,7 @@ type CheckoutValues = z.infer<typeof checkoutSchema>
 export default function CheckoutForm() {
   const [loading, setLoading] = useState(false)
   const { items, getTotal } = useCartStore()
-  const form = useForm<CheckoutValues>({ resolver: zodResolver(checkoutSchema) })
+  const form = useForm<CheckoutValues>({ resolver: zodResolver(checkoutSchema), defaultValues: { paymentGateway: "PAYSTACK" } })
 
   const onSubmit = async (data: CheckoutValues) => {
     setLoading(true)
@@ -41,6 +43,7 @@ export default function CheckoutForm() {
             price: item.price,
           })),
           total: getTotal(),
+          paymentGateway: data.paymentGateway,
         }),
         headers: { "Content-Type": "application/json" },
       })
@@ -94,6 +97,23 @@ export default function CheckoutForm() {
         </div>
         <FormField control={form.control} name="phone" render={({ field }) => (
           <FormItem><FormLabel>Phone</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
+        )} />
+        <FormField control={form.control} name="paymentGateway" render={({ field }) => (
+          <FormItem>
+            <FormLabel>Payment Method</FormLabel>
+            <FormControl>
+              <Select onValueChange={field.onChange} defaultValue={field.value}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select payment method" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="PAYSTACK">Paystack</SelectItem>
+                  <SelectItem value="FLUTTERWAVE">Flutterwave</SelectItem>
+                </SelectContent>
+              </Select>
+            </FormControl>
+            <FormMessage />
+          </FormItem>
         )} />
         <Button type="submit" disabled={loading} className="w-full">
           {loading ? "Processing..." : "Place Order & Pay"}

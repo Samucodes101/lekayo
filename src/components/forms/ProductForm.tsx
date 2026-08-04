@@ -22,14 +22,14 @@ const productSchema = z.object({
   sku: z.string().min(3),
   description: z.string().min(10),
   basePrice: z.number().positive(),
-  salePrice: z.number().positive().optional(),
+  salePrice: z.number().positive().nullable().optional(),
   featured: z.boolean().default(false),
   status: z.enum(["DRAFT", "PUBLISHED", "ARCHIVED"]),
   brandId: z.string().cuid(),
   categoryId: z.string().cuid(),
   subcategoryId: z.string().cuid().optional(),
   tags: z.array(z.string()).optional(),
-  materials: z.string().optional(),
+  materials: z.string().nullable().optional(),
   variants: z.array(z.object({
     sku: z.string().min(3),
     stock: z.number().int().min(0),
@@ -57,6 +57,9 @@ export default function ProductForm({ product }: { product?: any }) {
   const defaultValues = product
     ? {
         ...product,
+        salePrice: product.salePrice ?? undefined,
+        materials: product.materials ?? undefined,
+        tags: product.tags ?? [],
         variants: product.variants?.map((v: any) => ({
           ...v,
           images: v.images || [],
@@ -226,7 +229,7 @@ export default function ProductForm({ product }: { product?: any }) {
             </FormItem>
           )} />
           <FormField control={form.control} name="materials" render={({ field }) => (
-            <FormItem><FormLabel>Materials</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
+            <FormItem><FormLabel>Materials</FormLabel><FormControl><Input {...field} value={field.value ?? ""} /></FormControl><FormMessage /></FormItem>
           )} />
         </div>
 

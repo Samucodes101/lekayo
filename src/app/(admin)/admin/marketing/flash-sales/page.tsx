@@ -4,26 +4,15 @@ import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
-import { Input } from "@/components/ui/input"
-import { Textarea } from "@/components/ui/textarea"
-import { Label } from "@/components/ui/label"
-import { Switch } from "@/components/ui/switch"
 import { toast } from "@/hooks/use-toast"
 import { format } from "date-fns"
+import FlashSaleForm from "@/components/marketing/FlashSaleForm"
 
 export default function FlashSalesPage() {
   const [sales, setSales] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [open, setOpen] = useState(false)
   const [editing, setEditing] = useState<any>(null)
-  const [form, setForm] = useState({
-    name: "",
-    slug: "",
-    description: "",
-    startsAt: "",
-    endsAt: "",
-    active: true,
-  })
 
   useEffect(() => {
     fetchSales()
@@ -36,19 +25,10 @@ export default function FlashSalesPage() {
     setLoading(false)
   }
 
-  const handleSubmit = async () => {
-    const res = await fetch("/api/marketing/flash-sales", {
-      method: editing ? "PUT" : "POST",
-      body: JSON.stringify(editing ? { ...form, id: editing.id } : form),
-      headers: { "Content-Type": "application/json" },
-    })
-    if (res.ok) {
-      toast({ title: "Flash sale saved" })
-      setOpen(false)
-      fetchSales()
-      setForm({ name: "", slug: "", description: "", startsAt: "", endsAt: "", active: true })
-      setEditing(null)
-    }
+  const handleSaved = async () => {
+    setOpen(false)
+    setEditing(null)
+    await fetchSales()
   }
 
   if (loading) return <div>Loading...</div>
@@ -60,20 +40,9 @@ export default function FlashSalesPage() {
         <Dialog open={open} onOpenChange={setOpen}>
           <DialogTrigger asChild><Button>Add Flash Sale</Button></DialogTrigger>
           <DialogContent>
-            <DialogHeader><DialogTitle>{editing ? "Edit" : "Add"} Flash Sale</DialogTitle></DialogHeader>
-            <div className="space-y-4">
-              <div><Label>Name</Label><Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} /></div>
-              <div><Label>Slug</Label><Input value={form.slug} onChange={(e) => setForm({ ...form, slug: e.target.value })} /></div>
-              <div><Label>Description</Label><Textarea value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} /></div>
-              <div><Label>Starts At</Label><Input type="datetime-local" value={form.startsAt} onChange={(e) => setForm({ ...form, startsAt: e.target.value })} /></div>
-              <div><Label>Ends At</Label><Input type="datetime-local" value={form.endsAt} onChange={(e) => setForm({ ...form, endsAt: e.target.value })} /></div>
-              <div className="flex items-center gap-2">
-                <Label>Active</Label>
-                <Switch checked={form.active} onCheckedChange={(v) => setForm({ ...form, active: v })} />
-              </div>
-              <Button onClick={handleSubmit} className="w-full">Save</Button>
-            </div>
-          </DialogContent>
+              <DialogHeader><DialogTitle>{editing ? "Edit" : "Add"} Flash Sale</DialogTitle></DialogHeader>
+              <FlashSaleForm sale={editing} onSave={handleSaved} />
+            </DialogContent>
         </Dialog>
       </div>
       <Table>
@@ -87,7 +56,7 @@ export default function FlashSalesPage() {
               <TableCell>{format(new Date(s.startsAt), "dd/MM/yyyy")} - {format(new Date(s.endsAt), "dd/MM/yyyy")}</TableCell>
               <TableCell>{s.active ? "✓" : "-"}</TableCell>
               <TableCell>
-                <Button variant="ghost" size="sm" onClick={() => { setEditing(s); setForm(s); setOpen(true) }}>Edit</Button>
+                <Button variant="ghost" size="sm" onClick={() => { setEditing(s); setOpen(true) }}>Edit</Button>
               </TableCell>
             </TableRow>
           ))}
