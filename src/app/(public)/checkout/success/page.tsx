@@ -5,18 +5,22 @@ import { useSearchParams } from "next/navigation"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { useCartStore } from "@/stores/cartStore"
+import { useGuestCartStore } from "@/stores/guestCartStore"
 
 export default function CheckoutSuccessPage() {
   const searchParams = useSearchParams()
   const reference = searchParams.get("reference")
   const clearCart = useCartStore((state) => state.clearCart)
+  const clearGuestCart = useGuestCartStore((s) => s.clear)
 
   useEffect(() => {
     if (reference) {
       // Optionally verify payment again
-      clearCart()
+      // Clear both auth and guest stores to ensure client state is reset
+      useCartStore.getState().clearCart()
+      useGuestCartStore.getState().clear()
     }
-  }, [reference, clearCart])
+  }, [reference, clearCart, clearGuestCart])
 
   return (
     <div className="container mx-auto px-4 py-16 text-center">

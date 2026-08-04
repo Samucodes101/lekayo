@@ -1,12 +1,12 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { useCartStore } from "@/stores/cartStore"
+import { useActiveCart } from "@/hooks/useActiveCart"
 import CheckoutForm from "@/components/forms/CheckoutForm"
 import OrderSummary from "@/components/shared/OrderSummary"
 
 export default function CheckoutPage() {
-  const { items, getSubtotal, getTotal } = useCartStore()
+  const { items, getSubtotal, getTotal } = useActiveCart()
   const [isReady, setIsReady] = useState(false)
 
   useEffect(() => {

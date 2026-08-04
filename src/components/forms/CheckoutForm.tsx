@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
-import { useCartStore } from "@/stores/cartStore"
+import { useActiveCart } from "@/hooks/useActiveCart"
 import { toast } from "@/hooks/use-toast"
 
 const checkoutSchema = z.object({
@@ -27,7 +27,7 @@ type CheckoutValues = z.infer<typeof checkoutSchema>
 
 export default function CheckoutForm() {
   const [loading, setLoading] = useState(false)
-  const { items, getTotal } = useCartStore()
+  const { items, getTotal } = useActiveCart()
   const form = useForm<CheckoutValues>({ resolver: zodResolver(checkoutSchema), defaultValues: { paymentGateway: "PAYSTACK" } })
 
   const onSubmit = async (data: CheckoutValues) => {
