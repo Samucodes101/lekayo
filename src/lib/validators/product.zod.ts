@@ -13,5 +13,5 @@ export const productSchema = z.object({
   subcategoryId: z.string().cuid().optional(),
   tags: z.array(z.string()).optional(),
   materials: z.string().optional(),
-  variants: z.array(z.object({ sku: z.string(), stock: z.number().int().min(0), price: z.number().optional(), colorId: z.string().optional(), sizeValue: z.string().optional() })).optional(),
+  variants: z.array(z.object({ order: z.number().int().default(0), sku: z.string(), stock: z.number().int().min(0), price: z.number().optional(), colorId: z.string().optional(), sizeValue: z.string().optional() })).optional(),
 })

@@ -16,7 +16,7 @@ export async function GET(req: NextRequest) {
         include: {
           product: {
             include: {
-              variants: { include: { images: true } },
+              variants: { include: { images: true }, orderBy: { order: "asc" } },
             },
           },
         },

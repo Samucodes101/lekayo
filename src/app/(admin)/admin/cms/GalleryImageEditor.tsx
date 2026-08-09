@@ -13,13 +13,12 @@ const gallerySchema = z.object({
   image: z.string().optional(),
   link: z.string().optional(),
   altText: z.string().optional(),
-  order: z.number().int().default(0),
 })
 
 export default function GalleryImageEditor({ image, onSave }: { image?: any; onSave: () => void }) {
   const form = useForm({
     resolver: zodResolver(gallerySchema),
-    defaultValues: image || { order: 0 },
+    defaultValues: image || {},
   })
 
   const onSubmit = async (data: any) => {
@@ -51,9 +50,6 @@ export default function GalleryImageEditor({ image, onSave }: { image?: any; onS
         )} />
         <FormField control={form.control} name="altText" render={({ field }) => (
           <FormItem><FormLabel>Alt Text</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
-        )} />
-        <FormField control={form.control} name="order" render={({ field }) => (
-          <FormItem><FormLabel>Order</FormLabel><FormControl><Input type="number" {...field} /></FormControl><FormMessage /></FormItem>
         )} />
         <Button type="submit">Save Image</Button>
       </form>

@@ -45,9 +45,19 @@ export default function FlashSaleForm({ sale, onSave }: { sale?: any; onSave?: (
     resolver: zodResolver(flashSaleSchema),
     defaultValues: sale
       ? {
-          ...sale,
-          ...(sale.criteria ?? {}),
-          products: sale.criteria?.products ?? sale.products ?? [],
+          name: sale.name ?? "",
+          slug: sale.slug ?? "",
+          description: sale.description ?? "",
+          startsAt: sale.startsAt
+            ? new Date(sale.startsAt).toISOString().slice(0, 16)
+            : "",
+          endsAt: sale.endsAt
+            ? new Date(sale.endsAt).toISOString().slice(0, 16)
+            : "",
+          active: sale.active ?? true,
+          allProductsDiscount:
+            sale.criteria?.allProductsDiscount ?? undefined,
+          products: sale.products ?? [],
           categoryDiscounts: sale.criteria?.categoryDiscounts ?? [],
           subcategoryDiscounts: sale.criteria?.subcategoryDiscounts ?? [],
           brandDiscounts: sale.criteria?.brandDiscounts ?? [],
@@ -118,7 +128,8 @@ export default function FlashSaleForm({ sale, onSave }: { sale?: any; onSave?: (
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+      <form onSubmit={form.handleSubmit(onSubmit)} className="flex flex-col" style={{ maxHeight: "calc(100vh - 180px)" }}>
+        <div className="flex-1 overflow-y-auto space-y-6 px-1">
         <div className="grid md:grid-cols-2 gap-4">
           <FormField control={form.control} name="name" render={({ field }) => (
             <FormItem><FormLabel>Name</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
@@ -363,8 +374,11 @@ export default function FlashSaleForm({ sale, onSave }: { sale?: any; onSave?: (
             + Add Brand Discount
           </Button>
         </div>
+        </div>
 
-        <Button type="submit" disabled={loading}>{loading ? "Saving..." : "Save Flash Sale"}</Button>
+        <div className="sticky bottom-0 pt-4 pb-2 bg-background border-t z-10">
+          <Button type="submit" disabled={loading}>{loading ? "Saving..." : "Save Flash Sale"}</Button>
+        </div>
       </form>
     </Form>
   )

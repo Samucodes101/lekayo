@@ -18,13 +18,12 @@ const editorialSchema = z.object({
   link: z.string().optional(),
   position: z.string(),
   active: z.boolean().default(true),
-  order: z.number().int().default(0),
 })
 
 export default function EditorialEditor({ block, onSave }: { block?: any; onSave: () => void }) {
   const form = useForm({
     resolver: zodResolver(editorialSchema),
-    defaultValues: block || { active: true, order: 0, position: "FULL_WIDTH" },
+    defaultValues: block || { active: true, position: "FULL_WIDTH" },
   })
 
   const onSubmit = async (data: any) => {
@@ -71,9 +70,6 @@ export default function EditorialEditor({ block, onSave }: { block?: any; onSave
             </FormControl>
             <FormMessage />
           </FormItem>
-        )} />
-        <FormField control={form.control} name="order" render={({ field }) => (
-          <FormItem><FormLabel>Order</FormLabel><FormControl><Input type="number" {...field} /></FormControl><FormMessage /></FormItem>
         )} />
         <div className="flex items-center gap-2">
           <FormField control={form.control} name="active" render={({ field }) => (

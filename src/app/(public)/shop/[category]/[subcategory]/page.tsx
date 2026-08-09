@@ -2,6 +2,7 @@ import { notFound } from "next/navigation"
 import { prisma } from "@/lib/db"
 import ProductGrid from "@/components/shared/ProductGrid"
 import Pagination from "@/components/shared/Pagination"
+import { enrichProductsWithFlashSales } from "@/lib/flashSale"
 
 export default async function SubcategoryPage({ params, searchParams }: { params: { category: string, subcategory: string }, searchParams: { page?: string } }) {
   const subcategory = await prisma.subcategory.findUnique({ where: { slug: params.subcategory }, include: { category: true } })
@@ -11,12 +12,13 @@ export default async function SubcategoryPage({ params, searchParams }: { params
   const limit = 24
   const skip = (page - 1) * limit
 
-  const products = await prisma.product.findMany({
+  const rawProducts = await prisma.product.findMany({
     where: { subcategoryId: subcategory.id, status: "PUBLISHED" },
     include: { variants: { include: { images: true } }, brand: true },
     skip,
     take: limit,
   })
+  const products = await enrichProductsWithFlashSales(rawProducts as any)
   const total = await prisma.product.count({ where: { subcategoryId: subcategory.id, status: "PUBLISHED" } })
 
   return (

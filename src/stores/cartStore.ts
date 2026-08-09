@@ -6,6 +6,7 @@ export interface CartItem {
   name: string
   sku: string
   price: number
+  originalPrice: number
   quantity: number
   image: string
   color?: { name: string; hex: string }

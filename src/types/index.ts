@@ -28,6 +28,7 @@ export interface ProductWithVariants {
       hexCode: string
     } | null
     sizeValue?: string | null
+    order?: number | null
     images: Array<{
       url: string
       altText?: string | null

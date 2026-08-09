@@ -84,10 +84,27 @@ async function buildFlashSaleProducts(data: FlashSalePayload) {
 
 export async function GET() {
   const sales = await prisma.flashSale.findMany({
-    include: { products: { include: { product: true } } },
+    include: {
+      products: { include: { product: true } },
+    },
     orderBy: { createdAt: "desc" },
   })
-  return NextResponse.json(sales)
+
+  // Map the response so the form receives the expected shape.
+  // Product-level discounts come from FlashSaleProduct rows (relation);
+  // category / subcategory / brand / all-product discounts live in criteria JSON.
+  return NextResponse.json(
+    sales.map((sale) => ({
+      ...sale,
+      criteria: sale.criteria ?? {},
+      // Synthesise a form-compatible `products` array from FlashSaleProduct rows
+      products: sale.products.map((p) => ({
+        productId: p.productId,
+        discountType: p.discountPercent != null ? ("PERCENTAGE" as const) : ("FIXED" as const),
+        discountValue: p.discountPercent ?? p.discountPrice ?? 0,
+      })),
+    })),
+  )
 }
 
 export async function POST(req: NextRequest) {
@@ -103,7 +120,6 @@ export async function POST(req: NextRequest) {
       ...saleFields,
       criteria: {
         allProductsDiscount: data.allProductsDiscount,
-        products: data.products,
         categoryDiscounts: data.categoryDiscounts,
         subcategoryDiscounts: data.subcategoryDiscounts,
         brandDiscounts: data.brandDiscounts,
@@ -122,8 +138,9 @@ export async function POST(req: NextRequest) {
 export async function PUT(req: NextRequest) {
   const session = await getServerSession(authOptions)
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-  const { id, ...data } = (await req.json()) as FlashSalePayload & { id: string }
-  const flashSaleProducts = await buildFlashSaleProducts(data)
+  const { id, allProductsDiscount, products, categoryDiscounts, subcategoryDiscounts, brandDiscounts, ...data } =
+    (await req.json()) as FlashSalePayload & { id: string }
+  const flashSaleProducts = await buildFlashSaleProducts({ allProductsDiscount, products, categoryDiscounts, subcategoryDiscounts, brandDiscounts, ...data } as FlashSalePayload)
 
   await prisma.flashSaleProduct.deleteMany({ where: { flashSaleId: id } })
 
@@ -132,11 +149,10 @@ export async function PUT(req: NextRequest) {
     data: {
       ...data,
       criteria: {
-        allProductsDiscount: data.allProductsDiscount,
-        products: data.products,
-        categoryDiscounts: data.categoryDiscounts,
-        subcategoryDiscounts: data.subcategoryDiscounts,
-        brandDiscounts: data.brandDiscounts,
+        allProductsDiscount: allProductsDiscount,
+        categoryDiscounts: categoryDiscounts,
+        subcategoryDiscounts: subcategoryDiscounts,
+        brandDiscounts: brandDiscounts,
       },
       startsAt: data.startsAt ? new Date(data.startsAt) : undefined,
       endsAt: data.endsAt ? new Date(data.endsAt) : undefined,

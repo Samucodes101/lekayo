@@ -16,7 +16,7 @@ export default function TestimonialsPage() {
   const [loading, setLoading] = useState(true)
   const [open, setOpen] = useState(false)
   const [editing, setEditing] = useState<any>(null)
-  const [form, setForm] = useState({ customerName: "", review: "", rating: 5, photo: "", approved: false, order: 0 })
+  const [form, setForm] = useState({ customerName: "", review: "", rating: 5, photo: "", approved: false })
 
   useEffect(() => {
     fetchTestimonials()
@@ -39,7 +39,7 @@ export default function TestimonialsPage() {
       toast({ title: "Testimonial saved" })
       setOpen(false)
       fetchTestimonials()
-      setForm({ customerName: "", review: "", rating: 5, photo: "", approved: false, order: 0 })
+      setForm({ customerName: "", review: "", rating: 5, photo: "", approved: false })
       setEditing(null)
     }
   }
@@ -63,7 +63,6 @@ export default function TestimonialsPage() {
                 <Label>Approved</Label>
                 <Switch checked={form.approved} onCheckedChange={(v) => setForm({ ...form, approved: v })} />
               </div>
-              <div><Label>Order</Label><Input type="number" value={form.order} onChange={(e) => setForm({ ...form, order: Number(e.target.value) })} /></div>
               <Button onClick={handleSubmit} className="w-full">Save</Button>
             </div>
           </DialogContent>

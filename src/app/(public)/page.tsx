@@ -8,6 +8,7 @@ import Testimonials from "@/components/shared/Testimonials"
 import Newsletter from "@/components/shared/Newsletter"
 import ShopByCategory from "@/components/shared/ShopByCategory"
 import { ProductWithVariants } from "@/types"
+import { enrichProductsWithFlashSales } from "@/lib/flashSale"
 
 export default async function HomePage() {
   // Fetch sections with order and visibility
@@ -18,25 +19,56 @@ export default async function HomePage() {
 
   // Fetch data
   const hero = await prisma.heroBanner.findFirst({ where: { active: true }, orderBy: { order: "asc" } })
-  const featuredProducts = (await prisma.product.findMany({
+  const rawFeatured = await prisma.product.findMany({
     where: { featured: true, status: "PUBLISHED" },
     take: 8,
     include: { variants: { include: { images: true, color: true } }, brand: true, category: true },
-  })) as unknown as ProductWithVariants[]
-  const newArrivals = (await prisma.product.findMany({
+  })
+  const rawNewArrivals = await prisma.product.findMany({
     where: { status: "PUBLISHED" },
     orderBy: { createdAt: "desc" },
     take: 8,
     include: { variants: { include: { images: true, color: true } }, brand: true, category: true },
-  })) as unknown as ProductWithVariants[]
+  })
+
+  // Enrich with flash sale prices
+  const allProducts = [...rawFeatured, ...rawNewArrivals]
+  const enriched = await enrichProductsWithFlashSales(allProducts as any)
+  const enrichedMap = new Map(enriched.map(p => [p.id, p]))
+  const featuredProducts = rawFeatured.map(p => enrichedMap.get(p.id) || p) as unknown as ProductWithVariants[]
+  const newArrivals = rawNewArrivals.map(p => enrichedMap.get(p.id) || p) as unknown as ProductWithVariants[]
+
   const activeCampaign = await prisma.seasonalCampaign.findFirst({
     where: { active: true, startsAt: { lte: new Date() }, endsAt: { gte: new Date() } },
     include: { featuredProducts: { include: { product: { include: { variants: { include: { images: true, color: true } }, brand: true, category: true } } } } },
   })
+
+  // Enrich campaign products with flash sales
+  if (activeCampaign) {
+    const campaignProducts = activeCampaign.featuredProducts.map(fp => fp.product)
+    const enrichedCampaign = await enrichProductsWithFlashSales(campaignProducts as any)
+    const campaignMap = new Map(enrichedCampaign.map(p => [p.id, p]))
+    activeCampaign.featuredProducts.forEach(fp => {
+      const enriched = campaignMap.get(fp.product.id)
+      if (enriched) Object.assign(fp.product, enriched)
+    })
+  }
+
   const activeCollections = await prisma.styleCollection.findMany({
     where: { active: true },
     include: { products: { include: { product: { include: { variants: { include: { images: true, color: true } }, brand: true, category: true } } } } },
   })
+
+  // Enrich collection products with flash sales
+  for (const collection of activeCollections) {
+    const colProducts = collection.products.map(cp => cp.product)
+    const enrichedCol = await enrichProductsWithFlashSales(colProducts as any)
+    const colMap = new Map(enrichedCol.map(p => [p.id, p]))
+    collection.products.forEach(cp => {
+      const enriched = colMap.get(cp.product.id)
+      if (enriched) Object.assign(cp.product, enriched)
+    })
+  }
   const brands = await prisma.brand.findMany({ where: { featured: true }, orderBy: { order: "asc" } })
   const testimonials = await prisma.testimonial.findMany({ where: { approved: true }, orderBy: { order: "asc" } })
   const categories = await prisma.category.findMany({

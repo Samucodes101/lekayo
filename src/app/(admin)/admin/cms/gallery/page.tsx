@@ -15,7 +15,7 @@ export default function GalleryPage() {
   const [loading, setLoading] = useState(true)
   const [open, setOpen] = useState(false)
   const [editing, setEditing] = useState<any>(null)
-  const [form, setForm] = useState({ image: "", link: "", altText: "", order: 0 })
+  const [form, setForm] = useState({ image: "", link: "", altText: "" })
 
   useEffect(() => {
     fetchImages()
@@ -38,7 +38,7 @@ export default function GalleryPage() {
       toast({ title: "Image saved" })
       setOpen(false)
       fetchImages()
-      setForm({ image: "", link: "", altText: "", order: 0 })
+      setForm({ image: "", link: "", altText: "" })
       setEditing(null)
     }
   }
@@ -65,7 +65,6 @@ export default function GalleryPage() {
               </div>
               <div><Label>Link (optional)</Label><Input value={form.link} onChange={(e) => setForm({ ...form, link: e.target.value })} /></div>
               <div><Label>Alt Text</Label><Input value={form.altText} onChange={(e) => setForm({ ...form, altText: e.target.value })} /></div>
-              <div><Label>Order</Label><Input type="number" value={form.order} onChange={(e) => setForm({ ...form, order: Number(e.target.value) })} /></div>
               <Button onClick={handleSubmit} className="w-full">Save</Button>
             </div>
           </DialogContent>

@@ -1,7 +1,7 @@
 ## 1. Audit & Prep
 
 - [x] 1.1 Search for all usages of `useCartStore` and `useGuestCartStore` and list files to update
-- [ ] 1.2 Add a brief note in the repo (README or CONTRIBUTING) recommending `useActiveCart` for components
+- [x] 1.2 Add a brief note in the repo (README or CONTRIBUTING) recommending `useActiveCart` for components
 
 ## 2. Component Updates
 

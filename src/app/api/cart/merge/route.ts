@@ -80,7 +80,7 @@ export async function POST(req: NextRequest) {
       variant: {
         include: {
           product: true,
-          images: true,
+          images: { orderBy: { order: "asc" } },
           color: true,
         },
       },

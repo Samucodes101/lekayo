@@ -31,9 +31,10 @@ const productSchema = z.object({
   tags: z.array(z.string()).optional(),
   materials: z.string().nullable().optional(),
   variants: z.array(z.object({
+    order: z.number().int().default(0),
     sku: z.string().min(3),
     stock: z.number().int().min(0),
-    price: z.number().positive().nullable().optional(),
+    price: z.number().min(0).optional(),
     colorId: z.string().optional(),
     sizeValue: z.string().optional(),
     images: z.array(z.object({
@@ -63,9 +64,9 @@ export default function ProductForm({ product }: { product?: any }) {
         variants: product.variants?.map((v: any) => ({
           ...v,
           images: v.images || [],
-        })) || [{ sku: "", stock: 0, images: [] }],
+        })) || [{ order: 0, sku: "", stock: 0, images: [] }],
       }
-    : { status: "DRAFT", featured: false, variants: [{ sku: "", stock: 0, images: [] }] }
+    : { status: "DRAFT", featured: false, variants: [{ order: 0, sku: "", stock: 0, images: [] }] }
 
   const form = useForm<ProductValues>({
     resolver: zodResolver(productSchema),
@@ -251,11 +252,20 @@ export default function ProductForm({ product }: { product?: any }) {
                   </Button>
                 </div>
 
-                <div className="grid md:grid-cols-3 gap-4">
-                  <FormField control={form.control} name={`variants.${idx}.sku`} render={({ field }) => (
-                    <FormItem><FormLabel>SKU *</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
-                  )} />
-                  <FormField control={form.control} name={`variants.${idx}.stock`} render={({ field }) => (
+            <div className="grid md:grid-cols-4 gap-4">
+              <FormField control={form.control} name={`variants.${idx}.order`} render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Order</FormLabel>
+                  <FormControl>
+                    <Input type="number" {...field} onChange={e => field.onChange(Number(e.target.value))} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )} />
+              <FormField control={form.control} name={`variants.${idx}.sku`} render={({ field }) => (
+                <FormItem><FormLabel>SKU *</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
+              )} />
+              <FormField control={form.control} name={`variants.${idx}.stock`} render={({ field }) => (
                     <FormItem>
                       <FormLabel>Stock *</FormLabel>
                       <FormControl>
@@ -366,7 +376,7 @@ export default function ProductForm({ product }: { product?: any }) {
               </div>
             )
           })}
-          <Button type="button" variant="outline" onClick={() => append({ sku: "", stock: 0, images: [] })}>
+          <Button type="button" variant="outline" onClick={() => append({ order: fields.length, sku: "", stock: 0, images: [] })}>
             + Add Variant
           </Button>
         </div>

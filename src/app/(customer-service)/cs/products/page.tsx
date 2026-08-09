@@ -49,7 +49,7 @@ export default function CSProductsPage() {
                   <TableCell>{p.sku}</TableCell>
                   <TableCell>{p.brand?.name}</TableCell>
                   <TableCell>{formatPrice(p.salePrice || p.basePrice)}</TableCell>
-                  <TableCell>{p.variants?.[0]?.stock || 0}</TableCell>
+                  <TableCell>{[...(p.variants || [])].sort((a: any, b: any) => (a.order ?? 0) - (b.order ?? 0))[0]?.stock || 0}</TableCell>
                 </TableRow>
               ))}
             </TableBody>

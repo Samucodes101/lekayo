@@ -375,36 +375,31 @@ async function main() {
   }
 
   // ==========================================
-  // 15. CREATE HOMEPAGE SECTIONS (ALL)
+  // 15. CREATE HOMEPAGE SECTIONS (FIXED LIST — 8 wired types)
   // ==========================================
   const sectionTypes = [
     'HERO',
+    'CATEGORIES',
     'FEATURED_PRODUCTS',
     'SHOP_BY_BRAND',
     'SEASONAL_CAMPAIGN',
     'STYLE_COLLECTIONS',
-    'NEWSLETTER',
     'TESTIMONIALS',
-    'CATEGORIES',
-    'GALLERY',
-    'EDITORIAL',
-    'PROMO_BANNERS',
+    'NEWSLETTER',
   ]
 
   for (const [idx, type] of sectionTypes.entries()) {
-    const exists = await prisma.homepageSection.findFirst({ where: { sectionType: type } })
-    if (!exists) {
-      await prisma.homepageSection.create({
-        data: {
-          sectionType: type,
-          title: type.replace(/_/g, ' ').toLowerCase().replace(/\b\w/g, (l) => l.toUpperCase()),
-          order: idx,
-          visible: true,
-          config: {},
-        },
-      })
-      console.log(`✅ Created homepage section: ${type}`)
-    }
+    await prisma.homepageSection.upsert({
+      where: { sectionType: type },
+      update: {}, // never overwrite admin's order/visibility on re-run
+      create: {
+        sectionType: type,
+        title: type.replace(/_/g, ' ').toLowerCase().replace(/\b\w/g, (l) => l.toUpperCase()),
+        order: idx,
+        visible: true,
+      },
+    })
+    console.log(`✅ Upserted homepage section: ${type}`)
   }
 
   // ==========================================

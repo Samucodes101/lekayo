@@ -11,13 +11,18 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "No file provided" }, { status: 400 })
     }
 
-    const result = await uploadToCloudinary(file, folder) as any
+    const result = (await uploadToCloudinary(file, folder)) as any
     return NextResponse.json({
       secure_url: result.secure_url,
       public_id: result.public_id,
     })
-  } catch (error) {
+  } catch (error: any) {
     console.error("Upload error:", error)
-    return NextResponse.json({ error: "Upload failed" }, { status: 500 })
+    const message =
+      error?.message || error?.error?.message || String(error)
+    return NextResponse.json(
+      { error: "Upload failed", details: message },
+      { status: 500 },
+    )
   }
 }

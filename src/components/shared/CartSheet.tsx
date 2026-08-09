@@ -9,7 +9,7 @@ import Link from "next/link"
 import { formatPrice } from "@/lib/utils"
 
 export default function CartSheet() {
-  const { items, getTotal } = useActiveCart()
+  const { items, getTotal, isHydrated } = useActiveCart()
   const total = getTotal()
 
   return (
@@ -29,7 +29,9 @@ export default function CartSheet() {
           <SheetTitle>Shopping Cart ({items.length} items)</SheetTitle>
         </SheetHeader>
         <div className="flex-1 overflow-y-auto py-4">
-          {items.length === 0 ? (
+          {!isHydrated ? (
+            <p className="text-center text-gray-500">Loading cart...</p>
+          ) : items.length === 0 ? (
             <p className="text-center text-gray-500">Your cart is empty.</p>
           ) : (
             <div className="space-y-4">

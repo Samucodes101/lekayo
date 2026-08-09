@@ -168,6 +168,9 @@ export default function Navbar({ categories = [], brands = [] }: NavbarProps) {
           <Link href="/wholesale" className="text-sm font-medium hover:text-gray-600 transition">
             Wholesale
           </Link>
+          <Link href="/gallery" className="text-sm font-medium hover:text-gray-600 transition">
+            Gallery
+          </Link>
         </nav>
 
         {/* Icons & User Menu */}
@@ -246,6 +249,7 @@ export default function Navbar({ categories = [], brands = [] }: NavbarProps) {
                 <Link href="/shop" className="text-lg font-medium">Shop</Link>
                 <Link href="/brands" className="text-lg font-medium">Brands</Link>
                 <Link href="/wholesale" className="text-lg font-medium">Wholesale</Link>
+                <Link href="/gallery" className="text-lg font-medium">Gallery</Link>
                 {dashboardLink && (
                   <Link href={dashboardLink.href} className="text-lg font-medium flex items-center gap-2">
                     <dashboardLink.icon className="h-4 w-4" />

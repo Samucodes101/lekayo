@@ -11,6 +11,7 @@ interface AddToCartButtonProps {
   quantity: number
   productName: string
   price: number
+  originalPrice?: number
   image: string
   sku: string
   productId: string
@@ -23,6 +24,7 @@ export default function AddToCartButton({
   quantity,
   productName,
   price,
+  originalPrice,
   image,
   sku,
   productId,
@@ -41,6 +43,7 @@ export default function AddToCartButton({
         name: productName,
         sku,
         price,
+        originalPrice: originalPrice ?? price,
         quantity,
         image,
         color,

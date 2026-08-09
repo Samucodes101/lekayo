@@ -1,18 +1,22 @@
 export async function initializeFlutterwavePayment(
   email: string,
   amount: number,
-  metadata: any
+  metadata: any,
 ): Promise<{ authorization_url: string; reference: string } | null> {
-  const secretKey = process.env.FLUTTERWAVE_SECRET_KEY
+  const secretKey = process.env.FLUTTERWAVE_SECRET_KEY;
   if (!secretKey) {
-    console.error("Flutterwave secret key is not configured")
-    return null
+    console.error("Flutterwave secret key is not configured");
+    return null;
   }
 
+  // We generate our own tx_ref so we can use it as the reference even if
+  // Flutterwave does not return flw_ref in the response.
+  const txRef = `order-${metadata.orderId}-${Date.now()}`;
+
   const payload = {
-    tx_ref: `order-${metadata.orderId}-${Date.now()}`,
+    tx_ref: txRef,
     amount: String(amount),
-    currency: process.env.FLUTTERWAVE_CURRENCY || "NGN",
+    currency: "NGN",
     redirect_url: `${process.env.NEXT_PUBLIC_APP_URL}/checkout/success`,
     customer: {
       email,
@@ -27,7 +31,7 @@ export async function initializeFlutterwavePayment(
       orderId: metadata.orderId,
       paymentGateway: "FLUTTERWAVE",
     },
-  }
+  };
 
   try {
     const response = await fetch("https://api.flutterwave.com/v3/payments", {
@@ -37,25 +41,27 @@ export async function initializeFlutterwavePayment(
         Authorization: `Bearer ${secretKey}`,
       },
       body: JSON.stringify(payload),
-    })
+    });
     if (!response.ok) {
-      const errorBody = await response.text()
-      console.error("Flutterwave init error:", response.status, errorBody)
-      return null
+      const errorBody = await response.text();
+      console.error("Flutterwave init error:", response.status, errorBody);
+      return null;
     }
 
-    const { data } = await response.json()
-    if (!data?.link || !data?.flw_ref) {
-      console.error("Unexpected Flutterwave response", data)
-      return null
+    const json = await response.json();
+    const link = json?.data?.link;
+
+    if (!link) {
+      console.error("Unexpected Flutterwave response", json);
+      return null;
     }
 
     return {
-      authorization_url: data.link,
-      reference: data.flw_ref,
-    }
+      authorization_url: link,
+      reference: json?.data?.flw_ref || txRef,
+    };
   } catch (error) {
-    console.error("Flutterwave init error:", error)
-    return null
+    console.error("Flutterwave init error:", error);
+    return null;
   }
 }

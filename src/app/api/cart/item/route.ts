@@ -32,7 +32,7 @@ export async function POST(req: NextRequest) {
     where: { userId: user.id },
     include: {
       variant: {
-        include: { product: true, images: true, color: true },
+        include: { product: true, images: { orderBy: { order: "asc" } }, color: true },
       },
     },
   })
@@ -86,7 +86,7 @@ export async function PUT(req: NextRequest) {
     where: { userId: user.id },
     include: {
       variant: {
-        include: { product: true, images: true, color: true },
+        include: { product: true, images: { orderBy: { order: "asc" } }, color: true },
       },
     },
   })
@@ -129,7 +129,7 @@ export async function DELETE(req: NextRequest) {
     where: { userId: user.id },
     include: {
       variant: {
-        include: { product: true, images: true, color: true },
+        include: { product: true, images: { orderBy: { order: "asc" } }, color: true },
       },
     },
   })

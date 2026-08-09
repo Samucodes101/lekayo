@@ -17,6 +17,7 @@ export function useActiveCart() {
   const authGetSubtotal = useCartStore((s) => s.getSubtotal)
   const authGetTotal = useCartStore((s) => s.getTotal)
   const authSync = useCartStore((s) => s.syncWithServer)
+  const authIsHydrated = useCartStore((s) => s.isHydrated)
 
   const guestItems = useGuestCartStore((s) => s.items)
   const guestAddItem = useGuestCartStore((s) => s.addItem)
@@ -24,6 +25,7 @@ export function useActiveCart() {
   const guestUpdateQuantity = useGuestCartStore((s) => s.updateQuantity)
   const guestGetSubtotal = useGuestCartStore((s) => s.getSubtotal)
   const guestGetTotal = useGuestCartStore((s) => s.getTotal)
+  const guestIsHydrated = useGuestCartStore((s) => s.isHydrated)
 
   // Wrapped actions that ensure server-side sync for authenticated users
   const addItem = useCallback(
@@ -110,5 +112,6 @@ export function useActiveCart() {
     updateQuantity,
     getSubtotal: isAuthed ? authGetSubtotal : guestGetSubtotal,
     getTotal: isAuthed ? authGetTotal : guestGetTotal,
+    isHydrated: isAuthed ? authIsHydrated : guestIsHydrated,
   }
 }

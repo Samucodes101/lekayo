@@ -3,6 +3,7 @@ import { prisma } from "@/lib/db"
 import ProductGrid from "@/components/shared/ProductGrid"
 import FilterSidebar from "@/components/shared/FilterSidebar"
 import Pagination from "@/components/shared/Pagination"
+import { enrichProductsWithFlashSales } from "@/lib/flashSale"
 
 export default async function CategoryPage({
   params,
@@ -21,12 +22,13 @@ export default async function CategoryPage({
   const limit = 24
   const skip = (page - 1) * limit
 
-  const products = await prisma.product.findMany({
+  const rawProducts = await prisma.product.findMany({
     where: { categoryId: category.id, status: "PUBLISHED" },
     include: { variants: { include: { images: true } }, brand: true },
     skip,
     take: limit,
   })
+  const products = await enrichProductsWithFlashSales(rawProducts as any)
   const total = await prisma.product.count({
     where: { categoryId: category.id, status: "PUBLISHED" },
   })

@@ -2,13 +2,13 @@ import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/db"
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth"
-import { DATA_TAGS, getHomepageSections } from "@/lib/data"
+import { DATA_TAGS, getAllHomepageSectionsAdmin } from "@/lib/data"
 import { revalidateTag } from "next/cache"
 
 export const dynamic = "force-dynamic"
 
 export async function GET() {
-  const sections = await getHomepageSections()
+  const sections = await getAllHomepageSectionsAdmin()
   return NextResponse.json(sections)
 }
 

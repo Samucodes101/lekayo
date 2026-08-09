@@ -16,7 +16,7 @@ export default function BannersPage() {
   const [loading, setLoading] = useState(true)
   const [open, setOpen] = useState(false)
   const [editing, setEditing] = useState<any>(null)
-  const [form, setForm] = useState({ image: "", link: "", position: "MIDDLE", active: true, order: 0 })
+  const [form, setForm] = useState({ image: "", link: "", position: "MIDDLE", active: true })
 
   useEffect(() => {
     fetchBanners()
@@ -39,7 +39,7 @@ export default function BannersPage() {
       toast({ title: "Banner saved" })
       setOpen(false)
       fetchBanners()
-      setForm({ image: "", link: "", position: "MIDDLE", active: true, order: 0 })
+      setForm({ image: "", link: "", position: "MIDDLE", active: true })
       setEditing(null)
     } else {
       toast({ title: "Error", variant: "destructive" })
@@ -63,7 +63,7 @@ export default function BannersPage() {
         <h1 className="text-2xl font-serif">Promotional Banners</h1>
         <Dialog open={open} onOpenChange={setOpen}>
           <DialogTrigger asChild>
-            <Button onClick={() => { setEditing(null); setForm({ image: "", link: "", position: "MIDDLE", active: true, order: 0 }) }}>
+            <Button onClick={() => { setEditing(null); setForm({ image: "", link: "", position: "MIDDLE", active: true }) }}>
               Add Banner
             </Button>
           </DialogTrigger>
@@ -91,7 +91,6 @@ export default function BannersPage() {
                 <Label>Active</Label>
                 <Switch checked={form.active} onCheckedChange={(v) => setForm({ ...form, active: v })} />
               </div>
-              <div><Label>Order</Label><Input type="number" value={form.order} onChange={(e) => setForm({ ...form, order: Number(e.target.value) })} /></div>
               <Button onClick={handleSubmit} className="w-full">Save</Button>
             </div>
           </DialogContent>

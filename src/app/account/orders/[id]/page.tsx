@@ -9,7 +9,7 @@ export default async function OrderDetailPage({ params }: { params: { id: string
   const session = await getServerSession(authOptions)
   const order = await prisma.order.findFirst({
     where: { id: params.id, user: { email: session!.user.email! } },
-    include: { items: { include: { variant: { include: { product: true, images: true } } } }, shippingAddress: true }
+    include: { items: { include: { variant: { include: { product: true, images: { orderBy: { order: "asc" } } } } } }, shippingAddress: true }
   })
   if (!order) notFound()
 

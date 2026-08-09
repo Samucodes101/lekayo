@@ -16,7 +16,7 @@ export default function EditorialPage() {
   const [loading, setLoading] = useState(true)
   const [open, setOpen] = useState(false)
   const [editing, setEditing] = useState<any>(null)
-  const [form, setForm] = useState({ title: "", body: "", image: "", link: "", position: "FULL_WIDTH", active: true, order: 0 })
+  const [form, setForm] = useState({ title: "", body: "", image: "", link: "", position: "FULL_WIDTH", active: true })
 
   useEffect(() => {
     fetchBlocks()
@@ -39,7 +39,7 @@ export default function EditorialPage() {
       toast({ title: "Editorial block saved" })
       setOpen(false)
       fetchBlocks()
-      setForm({ title: "", body: "", image: "", link: "", position: "FULL_WIDTH", active: true, order: 0 })
+      setForm({ title: "", body: "", image: "", link: "", position: "FULL_WIDTH", active: true })
       setEditing(null)
     }
   }
@@ -78,7 +78,6 @@ export default function EditorialPage() {
                 <Label>Active</Label>
                 <Switch checked={form.active} onCheckedChange={(v) => setForm({ ...form, active: v })} />
               </div>
-              <div><Label>Order</Label><Input type="number" value={form.order} onChange={(e) => setForm({ ...form, order: Number(e.target.value) })} /></div>
               <Button onClick={handleSubmit} className="w-full">Save</Button>
             </div>
           </DialogContent>

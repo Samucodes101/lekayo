@@ -19,7 +19,6 @@ export default function HeroPage() {
     ctaLink: "",
     image: "",
     active: true,
-    order: 0,
   })
 
   useEffect(() => {
@@ -29,9 +28,11 @@ export default function HeroPage() {
   const fetchHero = async () => {
     const res = await fetch("/api/cms/hero")
     const data = await res.json()
-    if (data) {
-      setHero(data)
-      setForm(data)
+    // Support both single object and array (legacy cache) responses
+    const item = Array.isArray(data) ? data[0] : data
+    if (item) {
+      setHero(item)
+      setForm(item)
     }
     setLoading(false)
   }
@@ -73,7 +74,6 @@ export default function HeroPage() {
           <Label>Active</Label>
           <Switch checked={form.active} onCheckedChange={(v) => setForm({ ...form, active: v })} />
         </div>
-        <div><Label>Order</Label><Input type="number" value={form.order} onChange={(e) => setForm({ ...form, order: Number(e.target.value) })} /></div>
         <Button onClick={handleSubmit}>Save Hero</Button>
       </div>
     </div>

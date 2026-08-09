@@ -4,18 +4,22 @@ import type { CartItem } from "./cartStore"
 
 interface GuestCartStore {
   items: CartItem[]
+  isHydrated: boolean
   addItem: (item: Omit<CartItem, "quantity"> & { quantity?: number }) => void
   removeItem: (variantId: string) => void
   updateQuantity: (variantId: string, quantity: number) => void
   clear: () => void
   getSubtotal: () => number
   getTotal: () => number
+  setHydrated: (state: boolean) => void
 }
 
 export const useGuestCartStore = create<GuestCartStore>()(
   persist(
     (set, get) => ({
       items: [],
+      isHydrated: false,
+      setHydrated: (state: boolean) => set({ isHydrated: state }),
 
       addItem: (item) =>
         set((state) => {
@@ -45,6 +49,11 @@ export const useGuestCartStore = create<GuestCartStore>()(
       getSubtotal: () => get().items.reduce((sum, i) => sum + i.price * i.quantity, 0),
       getTotal: () => get().items.reduce((sum, i) => sum + i.price * i.quantity, 0),
     }),
-    { name: "guest-cart-storage" }
+    {
+      name: "guest-cart-storage",
+      onRehydrateStorage: () => (state) => {
+        state?.setHydrated(true)
+      },
+    }
   )
 )

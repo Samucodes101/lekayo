@@ -67,7 +67,7 @@ export const getSizes = unstable_cache(
 
 export const getHeroBanner = unstable_cache(
   async () =>
-    prisma.heroBanner.findMany({
+    prisma.heroBanner.findFirst({
       where: { active: true },
       orderBy: { order: "asc" },
     }),
@@ -80,6 +80,24 @@ export const getHomepageSections = unstable_cache(
     prisma.homepageSection.findMany({
       where: { visible: true },
       orderBy: { order: "asc" },
+    }),
+  [DATA_TAGS.homepageCms],
+  { tags: [DATA_TAGS.homepageCms] }
+)
+
+export const getAllHomepageSectionsAdmin = unstable_cache(
+  async () =>
+    prisma.homepageSection.findMany({
+      orderBy: { order: "asc" },
+    }),
+  [DATA_TAGS.homepageCms],
+  { tags: [DATA_TAGS.homepageCms] }
+)
+
+export const getPromotionalBanners = unstable_cache(
+  async () =>
+    prisma.promotionalBanner.findMany({
+      orderBy: [{ order: "asc" }],
     }),
   [DATA_TAGS.homepageCms],
   { tags: [DATA_TAGS.homepageCms] }

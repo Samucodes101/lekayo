@@ -42,14 +42,21 @@ export function ImageUpload({
         body: formData,
       })
 
-      if (!res.ok) throw new Error("Upload failed")
-
       const data = await res.json()
+
+      if (!res.ok) {
+        throw new Error(data.details || data.error || "Upload failed")
+      }
+
       setPreview(data.secure_url)
       onChange(data.secure_url, data.public_id)
       toast({ title: "Image uploaded successfully" })
-    } catch (error) {
-      toast({ title: "Upload failed", variant: "destructive" })
+    } catch (error: any) {
+      toast({
+        title: "Upload failed",
+        description: error?.message || String(error),
+        variant: "destructive",
+      })
       console.error(error)
     } finally {
       setUploading(false)
@@ -67,9 +74,9 @@ export function ImageUpload({
       return
     }
 
-    // Validate file size (max 5MB)
-    if (file.size > 5 * 1024 * 1024) {
-      toast({ title: "File too large (max 5MB)", variant: "destructive" })
+    // Validate file size (max 50MB)
+    if (file.size > 50 * 1024 * 1024) {
+      toast({ title: "File too large (max 50MB)", variant: "destructive" })
       return
     }
 
@@ -116,7 +123,7 @@ export function ImageUpload({
         >
           <Upload className="h-10 w-10 text-gray-400" />
           <p className="text-sm text-gray-500">Click to upload or drag & drop</p>
-          <p className="text-xs text-gray-400">PNG, JPG, WEBP up to 5MB</p>
+          <p className="text-xs text-gray-400">PNG, JPG, WEBP up to 50MB</p>
           {uploading && (
             <div className="w-full max-w-xs mt-2">
               <Progress value={progress} />

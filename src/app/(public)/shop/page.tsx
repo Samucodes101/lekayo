@@ -3,6 +3,7 @@ import ProductGrid from "@/components/shared/ProductGrid"
 import FilterSidebar from "@/components/shared/FilterSidebar"
 import SortDropdown from "@/components/shared/SortDropdown"
 import Pagination from "@/components/shared/Pagination"
+import { enrichProductsWithFlashSales } from "@/lib/flashSale"
 
 interface SearchParams {
   page?: string
@@ -41,7 +42,7 @@ export default async function ShopPage({ searchParams }: { searchParams: SearchP
     default: orderBy = { createdAt: "desc" }
   }
 
-  const [products, total, brands, categories] = await Promise.all([
+  const [rawProducts, total, brands, categories] = await Promise.all([
     prisma.product.findMany({
       where,
       include: { variants: { include: { images: true } }, brand: true },
@@ -53,6 +54,8 @@ export default async function ShopPage({ searchParams }: { searchParams: SearchP
     prisma.brand.findMany({ orderBy: { name: "asc" } }),
     prisma.category.findMany({ orderBy: { name: "asc" } }),
   ])
+
+  const products = await enrichProductsWithFlashSales(rawProducts as any)
 
   return (
     <div className="container mx-auto px-4 py-8">

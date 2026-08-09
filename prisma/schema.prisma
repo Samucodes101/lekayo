@@ -191,6 +191,7 @@ model ProductVariant {
   sku         String   @unique
   price       Float?
   stock       Int      @default(0)
+  order       Int      @default(0)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
@@ -265,6 +266,7 @@ model Order {
   subtotal        Float
   discount        Float       @default(0)
   shippingCost    Float       @default(0)
+  deliveryLocation String?
   tax             Float       @default(0)
   total           Float
   couponCode      String?
@@ -414,7 +416,7 @@ model Testimonial {
 // ---------- Homepage CMS ----------
 model HomepageSection {
   id          String   @id @default(cuid())
-  sectionType String
+  sectionType String   @unique
   title       String?
   order       Int      @default(0)
   visible     Boolean  @default(true)
