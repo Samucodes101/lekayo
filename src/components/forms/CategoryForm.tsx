@@ -28,7 +28,13 @@ export default function CategoryForm({ category }: { category?: any }) {
   const router = useRouter()
   const form = useForm<CategoryValues>({
     resolver: zodResolver(categorySchema),
-    defaultValues: category || { featured: false, order: 0, banner: "" },
+    defaultValues: category
+      ? {
+          ...category,
+          description: category.description ?? undefined,
+          banner: category.banner ?? undefined,
+        }
+      : { featured: false, order: 0, banner: "" },
   })
 
   const onSubmit = async (data: CategoryValues) => {

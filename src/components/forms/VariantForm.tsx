@@ -33,7 +33,15 @@ export default function VariantForm({ variant, productId }: { variant?: any; pro
 
   const form = useForm<VariantValues>({
     resolver: zodResolver(variantSchema),
-    defaultValues: variant || { stock: 0, images: [] },
+    defaultValues: variant
+      ? {
+          ...variant,
+          price: variant.price ?? undefined,
+          colorId: variant.colorId ?? undefined,
+          sizeValue: variant.sizeValue ?? undefined,
+          images: variant.images || [],
+        }
+      : { stock: 0, images: [] },
   })
   const { fields, append, remove } = useFieldArray({
     control: form.control,

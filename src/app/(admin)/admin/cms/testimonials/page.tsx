@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Label } from "@/components/ui/label"
 import { Switch } from "@/components/ui/switch"
+import { ImageUpload } from "@/components/shared/ImageUpload"
 import { toast } from "@/hooks/use-toast"
 import { Star } from "lucide-react"
 
@@ -58,7 +59,15 @@ export default function TestimonialsPage() {
               <div><Label>Customer Name</Label><Input value={form.customerName} onChange={(e) => setForm({ ...form, customerName: e.target.value })} /></div>
               <div><Label>Review</Label><Textarea value={form.review} onChange={(e) => setForm({ ...form, review: e.target.value })} /></div>
               <div><Label>Rating (1-5)</Label><Input type="number" min={1} max={5} value={form.rating} onChange={(e) => setForm({ ...form, rating: Number(e.target.value) })} /></div>
-              <div><Label>Photo URL</Label><Input value={form.photo} onChange={(e) => setForm({ ...form, photo: e.target.value })} /></div>
+              <div>
+                <Label>Photo</Label>
+                <ImageUpload
+                  value={form.photo}
+                  onChange={(url) => setForm({ ...form, photo: url })}
+                  onRemove={() => setForm({ ...form, photo: "" })}
+                  folder="testimonials"
+                />
+              </div>
               <div className="flex items-center gap-2">
                 <Label>Approved</Label>
                 <Switch checked={form.approved} onCheckedChange={(v) => setForm({ ...form, approved: v })} />

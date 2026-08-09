@@ -29,7 +29,14 @@ export default function BrandForm({ brand }: { brand?: any }) {
   const router = useRouter()
   const form = useForm<BrandValues>({
     resolver: zodResolver(brandSchema),
-    defaultValues: brand || { featured: false, order: 0 },
+    defaultValues: brand
+      ? {
+          ...brand,
+          logo: brand.logo ?? undefined,
+          banner: brand.banner ?? undefined,
+          description: brand.description ?? undefined,
+        }
+      : { featured: false, order: 0 },
   })
 
   const onSubmit = async (data: BrandValues) => {

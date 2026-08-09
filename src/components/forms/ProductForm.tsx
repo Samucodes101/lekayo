@@ -31,6 +31,7 @@ const productSchema = z.object({
   tags: z.array(z.string()).optional(),
   materials: z.string().nullable().optional(),
   variants: z.array(z.object({
+    id: z.string().cuid().optional(),
     order: z.number().int().default(0),
     sku: z.string().min(3),
     stock: z.number().int().min(0),
@@ -63,6 +64,9 @@ export default function ProductForm({ product }: { product?: any }) {
         tags: product.tags ?? [],
         variants: product.variants?.map((v: any) => ({
           ...v,
+          price: v.price ?? undefined,
+          colorId: v.colorId ?? undefined,
+          sizeValue: v.sizeValue ?? undefined,
           images: v.images || [],
         })) || [{ order: 0, sku: "", stock: 0, images: [] }],
       }
