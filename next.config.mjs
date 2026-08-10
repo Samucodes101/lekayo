@@ -20,7 +20,9 @@ const nextConfig = {
     ],
   },
   experimental: {
-    serverActions: {
+        allowedOrigins: ["lekayo.com", "www.lekayo.com"],
+        
+        serverActions: {
       bodySizeLimit: '5mb',
     },
   },
