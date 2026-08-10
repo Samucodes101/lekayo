@@ -28,7 +28,7 @@ export async function POST(req: NextRequest) {
 export async function PUT(req: NextRequest) {
   const session = await getServerSession(authOptions)
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-  const { id, ...data } = await req.json()
+  const { id, featuredProducts, ...data } = await req.json()
   const campaign = await prisma.seasonalCampaign.update({
     where: { id },
     data: {
