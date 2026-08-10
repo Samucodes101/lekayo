@@ -1,3 +1,5 @@
+import { prisma } from "@/lib/db"
+
 // ---------------------------------------------------------------------------
 // Types
 // ---------------------------------------------------------------------------
@@ -305,7 +307,6 @@ function mapToResolvableProduct(product: {
  * them in the shape expected by resolveDiscount.
  */
 export async function fetchActiveFlashSales(): Promise<ActiveFlashSale[]> {
-  const { prisma } = await import("@/lib/db")
   const sales = await prisma.flashSale.findMany({
     where: { active: true },
     include: {

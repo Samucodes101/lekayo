@@ -1,5 +1,5 @@
 import type { Metadata } from "next"
-import { Inter } from "next/font/google"
+import { Raleway } from "next/font/google"
 import { prisma } from "@/lib/db"
 import "./globals.css"
 import { Providers } from "./providers"
@@ -8,7 +8,11 @@ import Footer from "@/components/shared/Footer"
 import { Toaster } from "@/components/ui/toaster"
 import CommandPalette from "@/components/shared/CommandPalette"
 
-const inter = Inter({ subsets: ["latin"] })
+const raleway = Raleway({
+  subsets: ["latin"],
+  variable: "--font-raleway",
+  weight: ["300", "400", "500", "600", "700"],
+})
 
 export const metadata: Metadata = {
   title: "Lekayo | Luxury Fashion",
@@ -27,8 +31,8 @@ export default async function RootLayout({
   })
 
   return (
-    <html lang="en">
-      <body className={inter.className}>
+    <html lang="en" className={raleway.variable}>
+      <body className={raleway.className}>
         <Providers>
           <Navbar categories={categories} />
           <main className="min-h-screen">{children}</main>

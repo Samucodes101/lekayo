@@ -212,10 +212,10 @@ export default function CheckoutForm({
                 <FormControl>
                   <Input {...field} />
                 </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+              <FormMessage />
+            </FormItem>
+          )}
+        />
           <FormField
             control={form.control}
             name="lastName"
@@ -297,7 +297,7 @@ export default function CheckoutForm({
             <FormItem>
               <FormLabel>Phone</FormLabel>
               <FormControl>
-                <Input {...field} />
+                <Input type="tel" inputMode="tel" {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>

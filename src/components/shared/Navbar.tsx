@@ -244,25 +244,65 @@ export default function Navbar({ categories = [], brands = [] }: NavbarProps) {
               </Button>
             </SheetTrigger>
             <SheetContent>
-              <nav className="flex flex-col gap-4 mt-8">
-                <Link href="/" className="text-lg font-medium">Home</Link>
-                <Link href="/shop" className="text-lg font-medium">Shop</Link>
-                <Link href="/brands" className="text-lg font-medium">Brands</Link>
-                <Link href="/wholesale" className="text-lg font-medium">Wholesale</Link>
-                <Link href="/gallery" className="text-lg font-medium">Gallery</Link>
-                {dashboardLink && (
-                  <Link href={dashboardLink.href} className="text-lg font-medium flex items-center gap-2">
-                    <dashboardLink.icon className="h-4 w-4" />
-                    {dashboardLink.label}
-                  </Link>
+              <nav className="flex flex-col gap-1 mt-8">
+                <MobileNavLink href="/">Home</MobileNavLink>
+
+                {/* Shop — expandable accordion in mobile */}
+                {categories.length > 0 ? (
+                  <MobileAccordion title="Shop">
+                    <div className="flex flex-col gap-1 pb-1">
+                      <MobileNavLink href="/shop" className="text-sm text-gray-500">All Products</MobileNavLink>
+                      {categories.map((cat) => (
+                        <MobileAccordion key={cat.id} title={cat.name} nested>
+                          <MobileNavLink href={`/shop/${cat.slug}`} className="text-sm text-gray-500 pl-2">
+                            All {cat.name}
+                          </MobileNavLink>
+                          {cat.subcategories.map((sub) => (
+                            <MobileNavLink key={sub.id} href={`/shop/${cat.slug}/${sub.slug}`} className="text-sm text-gray-500 pl-2">
+                              {sub.name}
+                            </MobileNavLink>
+                          ))}
+                        </MobileAccordion>
+                      ))}
+                    </div>
+                  </MobileAccordion>
+                ) : (
+                  <MobileNavLink href="/shop">Shop</MobileNavLink>
                 )}
-                <hr />
+
+                {/* Brands — expandable accordion in mobile */}
+                {brands.length > 0 ? (
+                  <MobileAccordion title="Brands">
+                    <div className="flex flex-col gap-1 pb-1">
+                      {brands.map((brand) => (
+                        <MobileNavLink key={brand.id} href={`/brands/${brand.slug}`} className="text-sm text-gray-500">
+                          {brand.name}
+                        </MobileNavLink>
+                      ))}
+                      <MobileNavLink href="/brands" className="text-sm font-medium">View All Brands</MobileNavLink>
+                    </div>
+                  </MobileAccordion>
+                ) : (
+                  <MobileNavLink href="/brands">Brands</MobileNavLink>
+                )}
+
+                <MobileNavLink href="/wholesale">Wholesale</MobileNavLink>
+                <MobileNavLink href="/gallery">Gallery</MobileNavLink>
+                {dashboardLink && (
+                  <MobileNavLink href={dashboardLink.href}>
+                    <span className="flex items-center gap-2">
+                      <dashboardLink.icon className="h-4 w-4" />
+                      {dashboardLink.label}
+                    </span>
+                  </MobileNavLink>
+                )}
+                <hr className="my-2" />
                 {session ? (
-                  <button onClick={handleSignOut} className="text-left text-lg font-medium text-red-600">
+                  <button onClick={handleSignOut} className="text-left px-4 py-3 text-lg font-medium text-red-600 min-h-[44px]">
                     Sign Out
                   </button>
                 ) : (
-                  <Link href="/login" className="text-lg font-medium">Sign In</Link>
+                  <MobileNavLink href="/login">Sign In</MobileNavLink>
                 )}
               </nav>
             </SheetContent>
@@ -270,5 +310,61 @@ export default function Navbar({ categories = [], brands = [] }: NavbarProps) {
         </div>
       </div>
     </header>
+  )
+}
+
+/** Mobile link with minimum 44px touch target */
+function MobileNavLink({
+  href,
+  children,
+  className,
+}: {
+  href: string
+  children: React.ReactNode
+  className?: string
+}) {
+  return (
+    <Link
+      href={href}
+      className={cn(
+        "block px-4 py-3 text-lg font-medium min-h-[44px] flex items-center",
+        className,
+      )}
+    >
+      {children}
+    </Link>
+  )
+}
+
+/** Tappable accordion toggle for mobile menu — tap to expand/collapse */
+function MobileAccordion({
+  title,
+  children,
+  nested = false,
+}: {
+  title: string
+  children: React.ReactNode
+  nested?: boolean
+}) {
+  const [open, setOpen] = useState(false)
+  return (
+    <div>
+      <button
+        onClick={() => setOpen(!open)}
+        className={cn(
+          "w-full flex items-center justify-between px-4 py-3 text-lg font-medium min-h-[44px] hover:bg-gray-50",
+          nested && "text-base font-normal pl-6",
+        )}
+      >
+        {title}
+        <ChevronDown
+          className={cn(
+            "h-4 w-4 transition-transform duration-150",
+            open && "rotate-180",
+          )}
+        />
+      </button>
+      {open && <div className={nested ? "pl-2" : ""}>{children}</div>}
+    </div>
   )
 }

@@ -1,3 +1,5 @@
+export const dynamic = "force-dynamic"
+
 import { prisma } from "@/lib/db"
 import HeroBanner from "@/components/shared/HeroBanner"
 import ProductGrid from "@/components/shared/ProductGrid"

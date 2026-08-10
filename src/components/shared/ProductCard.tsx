@@ -94,7 +94,7 @@ export default function ProductCard({ product }: ProductCardProps) {
       <Button
         variant="ghost"
         size="icon"
-        className="absolute top-2 right-2 bg-white/80 rounded-full hover:bg-white/90"
+        className="absolute top-2 right-2 bg-white/80 rounded-full hover:bg-white/90 h-11 w-11"
         onClick={toggleWishlist}
       >
         <Heart className={cn("h-5 w-5", inWishlist && "fill-red-500 text-red-500")} />

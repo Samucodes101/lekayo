@@ -72,16 +72,20 @@ export default function FilterSidebar({ brands, categories }: FilterSidebarProps
         <AccordionItem value="brands">
           <AccordionTrigger>Brands</AccordionTrigger>
           <AccordionContent>
-            <div className="space-y-2">
+                <div className="space-y-1">
               {brands.map((brand) => (
-                <div key={brand.id} className="flex items-center space-x-2">
+                <label
+                  key={brand.id}
+                  htmlFor={`brand-${brand.id}`}
+                  className="flex items-center space-x-2 py-2 min-h-[44px] cursor-pointer hover:bg-gray-50 rounded"
+                >
                   <Checkbox
                     id={`brand-${brand.id}`}
                     checked={selectedBrands.includes(brand.id)}
                     onCheckedChange={(checked) => handleBrandChange(brand.id, checked === true)}
                   />
-                  <Label htmlFor={`brand-${brand.id}`}>{brand.name}</Label>
-                </div>
+                  <span>{brand.name}</span>
+                </label>
               ))}
             </div>
           </AccordionContent>
@@ -90,16 +94,20 @@ export default function FilterSidebar({ brands, categories }: FilterSidebarProps
         <AccordionItem value="categories">
           <AccordionTrigger>Categories</AccordionTrigger>
           <AccordionContent>
-            <div className="space-y-2">
+            <div className="space-y-1">
               {categories.map((cat) => (
-                <div key={cat.id} className="flex items-center space-x-2">
+                <label
+                  key={cat.id}
+                  htmlFor={`cat-${cat.id}`}
+                  className="flex items-center space-x-2 py-2 min-h-[44px] cursor-pointer hover:bg-gray-50 rounded"
+                >
                   <Checkbox
                     id={`cat-${cat.id}`}
                     checked={selectedCategories.includes(cat.id)}
                     onCheckedChange={(checked) => handleCategoryChange(cat.id, checked === true)}
                   />
-                  <Label htmlFor={`cat-${cat.id}`}>{cat.name}</Label>
-                </div>
+                  <span>{cat.name}</span>
+                </label>
               ))}
             </div>
           </AccordionContent>

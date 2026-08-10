@@ -1,3 +1,5 @@
+export const dynamic = "force-dynamic"
+
 import { prisma } from "@/lib/db"
 import ProductGrid from "@/components/shared/ProductGrid"
 import FilterSidebar from "@/components/shared/FilterSidebar"

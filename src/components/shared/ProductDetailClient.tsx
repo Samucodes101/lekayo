@@ -68,9 +68,27 @@ export default function ProductDetailClient({ product, related }: ProductDetailC
 
   return (
     <div className="grid md:grid-cols-2 gap-8">
-      {/* Image Gallery */}
+      {/* Image Gallery — touch-swipeable on mobile */}
       <div className="space-y-4">
-        <div className="aspect-square bg-gray-100 rounded-lg overflow-hidden relative">
+        <div
+          className="aspect-square bg-gray-100 rounded-lg overflow-hidden relative touch-pan-x"
+          onTouchStart={(e) => {
+            const touch = e.touches[0]
+            ;(e.currentTarget as HTMLDivElement).dataset.startX = String(touch.clientX)
+          }}
+          onTouchEnd={(e) => {
+            const startX = parseFloat((e.currentTarget as HTMLDivElement).dataset.startX || "0")
+            const endX = e.changedTouches[0].clientX
+            const diff = startX - endX
+            if (Math.abs(diff) > 40 && sortedImages.length > 1) {
+              if (diff > 0 && activeImageIndex < sortedImages.length - 1) {
+                setActiveImageIndex(activeImageIndex + 1)
+              } else if (diff < 0 && activeImageIndex > 0) {
+                setActiveImageIndex(activeImageIndex - 1)
+              }
+            }
+          }}
+        >
           <Image
             src={mainImage}
             alt={product.name}
@@ -81,12 +99,12 @@ export default function ProductDetailClient({ product, related }: ProductDetailC
             }}
           />
         </div>
-        <div className="flex gap-2 overflow-x-auto">
+        <div className="flex gap-2 overflow-x-auto pb-2">
           {sortedImages.map((img: any, idx: number) => (
             <div
               key={idx}
               onClick={() => setActiveImageIndex(idx)}
-              className={`w-20 h-20 bg-gray-100 rounded-md overflow-hidden cursor-pointer relative flex-shrink-0 border-2 transition ${
+              className={`w-20 h-20 bg-gray-100 rounded-md overflow-hidden cursor-pointer relative flex-shrink-0 border-2 transition min-w-[80px] ${
                 idx === activeImageIndex ? "border-black" : "border-transparent"
               }`}
             >
