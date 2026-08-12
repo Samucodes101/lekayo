@@ -22,8 +22,22 @@ export default function Testimonials({ testimonials }: TestimonialsProps) {
             </div>
             <p className="text-gray-700 italic">“{t.review}”</p>
             <div className="flex items-center gap-3 mt-4">
-              {t.photo && (
-                <Image src={t.photo} alt={t.customerName} width={40} height={40} className="rounded-full" />
+              {t.photo ? (
+                <Image
+                  src={t.photo}
+                  alt={t.customerName}
+                  width={40}
+                  height={40}
+                  className="rounded-full object-cover"
+                  unoptimized
+                  onError={(e) => {
+                    (e.currentTarget as HTMLImageElement).style.display = "none"
+                  }}
+                />
+              ) : (
+                <div className="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center text-gray-500 text-sm font-semibold">
+                  {t.customerName.charAt(0)}
+                </div>
               )}
               <span className="font-semibold">{t.customerName}</span>
             </div>
