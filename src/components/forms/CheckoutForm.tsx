@@ -135,8 +135,19 @@ export default function CheckoutForm({
       });
 
       if (!res.ok) {
-        const error = await res.text();
-        throw new Error(error);
+        const error = await res.json().catch(() => null);
+        if (error?.shortItems && Array.isArray(error.shortItems)) {
+          const list = error.shortItems
+            .map(
+              (s: any) =>
+                `${s.name} (${s.sku}) — requested ${s.requested}, only ${s.available} left`,
+            )
+            .join("\n");
+          throw new Error(
+            `Some items are no longer available:\n${list}`,
+          );
+        }
+        throw new Error(error?.error || "Failed to create order");
       }
 
       const { orderId } = await res.json();

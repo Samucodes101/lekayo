@@ -60,7 +60,7 @@ const bodyStyle: React.CSSProperties = {
   margin: 0,
   padding: 0,
   fontFamily:
-    'Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+    'Raleway, var(--font-raleway), system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
   background: "#f9fafb",
   color: "#111827",
   display: "flex",

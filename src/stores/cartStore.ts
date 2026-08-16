@@ -9,6 +9,7 @@ export interface CartItem {
   originalPrice: number
   quantity: number
   image: string
+  stock?: number
   color?: { name: string; hex: string }
   size?: string
 }
@@ -26,6 +27,12 @@ interface CartStore {
   setHydrated: (state: boolean) => void
 }
 
+// Clamp a quantity to the variant's available stock (when known).
+function clampQuantity(quantity: number, stock?: number) {
+  if (stock === undefined) return quantity
+  return Math.max(1, Math.min(quantity, stock))
+}
+
 export const useCartStore = create<CartStore>()(
   persist(
     (set, get) => ({
@@ -37,15 +44,31 @@ export const useCartStore = create<CartStore>()(
         set((state) => {
           const existing = state.items.find((i) => i.variantId === item.variantId)
           if (existing) {
+            const stock = item.stock ?? existing.stock
             return {
               items: state.items.map((i) =>
                 i.variantId === item.variantId
-                  ? { ...i, quantity: i.quantity + (item.quantity || 1) }
+                  ? {
+                      ...i,
+                      stock,
+                      quantity: clampQuantity(
+                        i.quantity + (item.quantity || 1),
+                        stock,
+                      ),
+                    }
                   : i
               ),
             }
           }
-          return { items: [...state.items, { ...item, quantity: item.quantity || 1 }] }
+          return {
+            items: [
+              ...state.items,
+              {
+                ...item,
+                quantity: clampQuantity(item.quantity || 1, item.stock),
+              },
+            ],
+          }
         }),
 
       removeItem: (variantId) =>
@@ -53,7 +76,11 @@ export const useCartStore = create<CartStore>()(
 
       updateQuantity: (variantId, quantity) =>
         set((state) => ({
-          items: state.items.map((i) => (i.variantId === variantId ? { ...i, quantity } : i)),
+          items: state.items.map((i) =>
+            i.variantId === variantId
+              ? { ...i, quantity: clampQuantity(quantity, i.stock) }
+              : i
+          ),
         })),
 
       clearCart: () => set({ items: [] }),

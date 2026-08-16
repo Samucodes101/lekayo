@@ -1,6 +1,7 @@
 import Image from "next/image"
 import Link from "next/link"
 import { ArrowUpRight } from "lucide-react"
+import { cloudinaryTransform } from "@/lib/image"
 
 interface HeroBannerProps {
   headline: string
@@ -20,13 +21,24 @@ export default function HeroBanner({
   image,
 }: HeroBannerProps) {
   return (
-    <div className="group relative h-[85vh] min-h-[560px] w-full overflow-hidden bg-black">
+    <div className="group relative h-[500px] w-full overflow-hidden bg-black sm:h-[560px] md:h-[640px] lg:h-[85vh] lg:min-h-[560px]">
+      {/* Mobile art direction: a portrait, smart-gravity crop keeps the subject in frame */}
       <Image
-        src={image}
+        src={cloudinaryTransform(image, { width: 750, height: 1000 })}
         alt={headline}
         fill
         priority
-        className="object-cover object-center scale-105 transition-transform duration-[6000ms] ease-out group-hover:scale-110 motion-safe:animate-[kenburns_10s_ease-out_forwards]"
+        sizes="100vw"
+        className="object-cover object-center scale-105 transition-transform duration-[6000ms] ease-out group-hover:scale-110 motion-safe:animate-[kenburns_10s_ease-out_forwards] sm:hidden"
+      />
+      {/* Desktop art direction: wide landscape crop preserves the original look */}
+      <Image
+        src={cloudinaryTransform(image, { width: 1920, height: 900 })}
+        alt={headline}
+        fill
+        priority
+        sizes="100vw"
+        className="hidden object-cover object-center scale-105 transition-transform duration-[6000ms] ease-out group-hover:scale-110 motion-safe:animate-[kenburns_10s_ease-out_forwards] sm:block"
       />
 
       <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-black/10" />

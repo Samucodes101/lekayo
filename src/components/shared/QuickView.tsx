@@ -53,6 +53,7 @@ export default function QuickView({ product, children }: QuickViewProps) {
                 image={imageUrl}
                 sku={firstVariant?.sku || product.sku}
                 productId={product.id}
+                stock={firstVariant?.stock}
               />
             </div>
             <Button

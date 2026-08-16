@@ -111,7 +111,7 @@ export default function Receipt({ order }: ReceiptProps) {
       {/* Footer */}
       <div className="mt-8 text-center text-sm text-gray-500 border-t pt-4">
         <p>Thank you for shopping at Lekayo.</p>
-        <p>Contact: hello@lekayo.com | +1 (555) 123-4567</p>
+        <p>Contact: lekayo.info@gmail.com | +234 903-008-7142</p>
       </div>
     </div>
   )

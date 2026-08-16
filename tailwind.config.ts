@@ -18,6 +18,7 @@ const config: Config = {
     extend: {
       fontFamily: {
         sans: ["var(--font-raleway)", "sans-serif"],
+        serif: ["var(--font-raleway)", "sans-serif"],
       },
       colors: {
         border: "hsl(var(--border))",

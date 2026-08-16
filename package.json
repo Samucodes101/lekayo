@@ -13,6 +13,7 @@
     "db:seed": "prisma db seed",
     "db:studio": "prisma studio",
     "db:clear": "tsx prisma/clearDb.ts",
+    "orders:release-stale": "tsx src/scripts/releaseStaleOrders.ts",
     "db:seed:dev": "cross-env ALLOW_DEV_SEED=true tsx prisma/seed.dev.ts",
     "audit": "powershell -ExecutionPolicy Bypass -File .\\audit-project.ps1",
     "test": "jest --passWithNoTests",

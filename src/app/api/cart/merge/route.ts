@@ -94,6 +94,7 @@ export async function POST(req: NextRequest) {
     sku: ci.variant.sku,
     price: ci.variant.price || ci.variant.product.basePrice,
     quantity: ci.quantity,
+    stock: ci.variant.stock,
     image: ci.variant.images[0]?.url || "/placeholder.png",
     color: ci.variant.color ? { name: ci.variant.color.name, hex: ci.variant.color.hexCode } : undefined,
     size: ci.variant.sizeValue || undefined,

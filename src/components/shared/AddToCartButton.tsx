@@ -15,6 +15,7 @@ interface AddToCartButtonProps {
   image: string
   sku: string
   productId: string
+  stock?: number
   color?: { name: string; hex: string }
   size?: string
 }
@@ -28,13 +29,18 @@ export default function AddToCartButton({
   image,
   sku,
   productId,
+  stock,
   color,
   size,
 }: AddToCartButtonProps) {
   const { addItem } = useActiveCart()
   const [loading, setLoading] = useState(false)
 
+  const outOfStock = stock !== undefined && stock <= 0
+
   const handleAdd = async () => {
+    if (outOfStock) return
+
     setLoading(true)
     try {
       addItem({
@@ -46,6 +52,7 @@ export default function AddToCartButton({
         originalPrice: originalPrice ?? price,
         quantity,
         image,
+        stock,
         color,
         size,
       })
@@ -58,9 +65,14 @@ export default function AddToCartButton({
   }
 
   return (
-    <Button onClick={handleAdd} disabled={loading} className="w-full">
-      <ShoppingBag className="mr-2 h-4 w-4" />
-      {loading ? "Adding..." : "Add to Cart"}
-    </Button>
+    <div className="space-y-2 w-full">
+      <Button onClick={handleAdd} disabled={loading || outOfStock} className="w-full">
+        <ShoppingBag className="mr-2 h-4 w-4" />
+        {outOfStock ? "Out of Stock" : loading ? "Adding..." : "Add to Cart"}
+      </Button>
+      {stock !== undefined && stock > 0 && stock <= 5 && (
+        <p className="text-xs text-amber-600 font-medium">Only {stock} left in stock</p>
+      )}
+    </div>
   )
 }

@@ -26,7 +26,11 @@ export default function CartItem({ item }: CartItemProps) {
           {item.color && `${item.color.name}, `}{item.size && `${item.size}, `}SKU: {item.sku}
         </p>
         <div className="flex items-center justify-between mt-2">
-          <QuantitySelector quantity={item.quantity} onQuantityChange={(qty) => updateQuantity(item.variantId, qty)} />
+          <QuantitySelector
+            quantity={item.quantity}
+            max={item.stock ?? 999}
+            onQuantityChange={(qty) => updateQuantity(item.variantId, qty)}
+          />
           <div className="text-right">
             {item.originalPrice > item.price && (
               <span className="text-xs text-gray-400 line-through">{formatPrice(item.originalPrice)}</span>
@@ -37,6 +41,9 @@ export default function CartItem({ item }: CartItemProps) {
             <Trash2 className="h-4 w-4" />
           </Button>
         </div>
+        {item.stock !== undefined && item.stock <= 5 && (
+          <p className="text-xs text-amber-600 font-medium mt-1">Only {item.stock} left in stock</p>
+        )}
       </div>
     </div>
   )

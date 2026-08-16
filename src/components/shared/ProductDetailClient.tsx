@@ -156,6 +156,7 @@ export default function ProductDetailClient({ product, related }: ProductDetailC
             image={mainImage}
             sku={selectedVariant?.sku || product.sku}
             productId={product.id}
+            stock={selectedVariant?.stock}
             color={selectedVariant?.color}
             size={selectedVariant?.sizeValue}
           />
