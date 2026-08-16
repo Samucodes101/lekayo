@@ -1,4 +1,3 @@
-import Image from "next/image"
 import { Star } from "lucide-react"
 import { Testimonial } from "@prisma/client"
 
@@ -23,15 +22,15 @@ export default function Testimonials({ testimonials }: TestimonialsProps) {
             <p className="text-gray-700 italic">“{t.review}”</p>
             <div className="flex items-center gap-3 mt-4">
               {t.photo ? (
-                <Image
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
                   src={t.photo}
                   alt={t.customerName}
                   width={40}
                   height={40}
                   className="rounded-full object-cover"
-                  unoptimized
                   onError={(e) => {
-                    (e.currentTarget as HTMLImageElement).style.display = "none"
+                    e.currentTarget.style.display = "none"
                   }}
                 />
               ) : (
