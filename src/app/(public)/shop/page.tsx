@@ -62,10 +62,10 @@ export default async function ShopPage({ searchParams }: { searchParams: SearchP
   return (
     <div className="container mx-auto px-4 py-8">
       <h1 className="text-3xl font-serif mb-6">All Products</h1>
-      <div className="flex gap-8">
+      <div className="flex flex-col gap-6 md:flex-row md:gap-8">
         <FilterSidebar brands={brands} categories={categories} />
         <div className="flex-1">
-          <div className="flex justify-between items-center mb-6">
+          <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
             <p className="text-sm text-gray-500">Showing {products.length} of {total} products</p>
             <SortDropdown />
           </div>

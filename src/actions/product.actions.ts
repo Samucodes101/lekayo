@@ -5,6 +5,7 @@ import { prisma } from "@/lib/db"
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth"
 import { Prisma, Role } from "@prisma/client"
+import { generateSlug } from "@/lib/utils"
 
 export async function createProduct(data: any) {
   const session = await getServerSession(authOptions)
@@ -18,7 +19,7 @@ export async function createProduct(data: any) {
     const product = await prisma.product.create({
       data: {
         ...productData,
-        slug: productData.name.toLowerCase().replace(/ /g, "-"),
+        slug: generateSlug(productData.name),
         variants: {
           create: variants?.map((v: any) => ({
             order: v.order ?? 0,
@@ -68,7 +69,7 @@ export async function updateProduct(id: string, data: any) {
   }
 
   const { variants, ...productData } = data
-  const slug = productData.name.toLowerCase().replace(/ /g, "-")
+  const slug = generateSlug(productData.name)
 
   await prisma.$transaction(async (tx) => {
     // Update product basic info

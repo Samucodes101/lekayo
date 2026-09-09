@@ -1,15 +1,22 @@
 export const dynamic = "force-dynamic"
 
 import { notFound } from "next/navigation"
+import { redirect } from "next/navigation"
 import { prisma } from "@/lib/db"
 import ProductDetailClient from "@/components/shared/ProductDetailClient"
 import Breadcrumb from "@/components/shared/Breadcrumb"
 import { fetchActiveFlashSales, resolveCheckoutPrice } from "@/lib/flashSale"
+import { generateSlug } from "@/lib/utils"
 
 export default async function ProductPage({ params }: { params: { slug: string } }) {
+  const decodedSlug = decodeURIComponent(params.slug)
+  const normalizedSlug = generateSlug(decodedSlug)
   const [product, activeSales] = await Promise.all([
-    prisma.product.findUnique({
-      where: { slug: params.slug, status: "PUBLISHED" },
+    prisma.product.findFirst({
+      where: {
+        status: "PUBLISHED",
+        OR: [{ slug: params.slug }, { slug: decodedSlug }, { slug: normalizedSlug }],
+      },
       include: {
         brand: true,
         category: true,
@@ -29,6 +36,7 @@ export default async function ProductPage({ params }: { params: { slug: string }
     fetchActiveFlashSales(),
   ])
   if (!product) notFound()
+  if (product.slug !== params.slug) redirect(`/products/${product.slug}`)
 
   // Resolve criteria-based flash sale discount (category/brand/all)
   const flashResolved = resolveCheckoutPrice(product, null, activeSales)

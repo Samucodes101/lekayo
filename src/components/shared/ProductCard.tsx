@@ -50,7 +50,7 @@ export default function ProductCard({ product }: ProductCardProps) {
   // fall back to client-side resolution from FlashSaleProduct rows
   const resolvedFlash = (product as any)._flashSaleResolved
   const displayPrice = resolvedFlash?.finalPrice ?? getEffectivePrice(product)
-  const originalPrice = resolvedFlash?.originalPrice ?? product.salePrice ?? product.basePrice
+  const originalPrice = resolvedFlash?.originalPrice ?? product.basePrice
   const isOnFlashSale = resolvedFlash ? resolvedFlash.discountSaved > 0 : hasFlashSaleDiscount(product)
   const discountPercent = resolvedFlash?.discountSaved
     ? Math.round((resolvedFlash.discountSaved / resolvedFlash.originalPrice) * 100)
@@ -78,15 +78,15 @@ export default function ProductCard({ product }: ProductCardProps) {
         <div className="mt-4">
           <h3 className="text-sm font-medium line-clamp-2">{product.name}</h3>
           <p className="text-sm text-gray-500">{product.brand?.name || "Unknown Brand"}</p>
-          <div className="mt-1 flex items-center gap-2">
-            <span className="font-semibold">{formatPrice(displayPrice)}</span>
+          <div className="mt-2 flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
+            <span className="font-semibold text-sm sm:text-base">{formatPrice(displayPrice)}</span>
             {isOnFlashSale && displayPrice < originalPrice ? (
-              <span className="text-sm text-red-500">
-                <span className="line-through text-gray-400 mr-1">{formatPrice(originalPrice)}</span>
-                {discountPercent}% OFF
+              <span className="inline-flex items-center gap-1 text-xs text-red-600">
+                <span className="line-through text-gray-400">{formatPrice(originalPrice)}</span>
+                <span className="rounded-sm bg-red-50 px-1 py-0.5 font-medium">-{discountPercent}%</span>
               </span>
             ) : product.salePrice && product.salePrice < product.basePrice ? (
-              <span className="text-sm text-gray-400 line-through">{formatPrice(product.basePrice)}</span>
+              <span className="text-xs text-gray-400 line-through">{formatPrice(product.basePrice)}</span>
             ) : null}
           </div>
         </div>
@@ -94,10 +94,12 @@ export default function ProductCard({ product }: ProductCardProps) {
       <Button
         variant="ghost"
         size="icon"
-        className="absolute top-2 right-2 bg-white/80 rounded-full hover:bg-white/90 h-11 w-11"
+        className="absolute right-2 top-2 h-8 w-8 rounded-full bg-white/90 p-0 shadow-sm hover:bg-white"
         onClick={toggleWishlist}
+        aria-label={inWishlist ? `Remove ${product.name} from wishlist` : `Add ${product.name} to wishlist`}
+        title={inWishlist ? "Remove from wishlist" : "Add to wishlist"}
       >
-        <Heart className={cn("h-5 w-5", inWishlist && "fill-red-500 text-red-500")} />
+        <Heart className={cn("h-4 w-4", inWishlist && "fill-red-500 text-red-500")} />
       </Button>
     </div>
   )
