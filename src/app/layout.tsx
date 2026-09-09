@@ -24,17 +24,25 @@ export default async function RootLayout({
 }: {
   children: React.ReactNode
 }) {
-  const categories = await prisma.category.findMany({
-    include: { subcategories: true },
-    where: { subcategories: { some: {} } },
-    orderBy: { order: "asc" },
-  })
+  const [categories, brands] = await Promise.all([
+    prisma.category.findMany({
+      include: { subcategories: true },
+      where: { featured: true, subcategories: { some: {} } },
+      orderBy: { order: "asc" },
+      take: 6,
+    }),
+    prisma.brand.findMany({
+      where: { featured: true },
+      orderBy: { order: "asc" },
+      take: 12,
+    }),
+  ])
 
   return (
     <html lang="en" className={raleway.variable}>
       <body className={raleway.className}>
         <Providers>
-          <Navbar categories={categories} />
+          <Navbar categories={categories} brands={brands} />
           <main className="min-h-screen">{children}</main>
           <Footer />
           <Toaster />

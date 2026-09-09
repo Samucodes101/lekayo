@@ -134,7 +134,7 @@ export default function Navbar({ categories = [], brands = [] }: NavbarProps) {
             )}
           </div>
 
-          {/* Brands — narrow dropdown, names only, opens on hover */}
+          {/* Brands — match Shop hover menu */}
           <div className="relative group/brands">
             <button className="text-sm font-medium hover:text-gray-600 transition flex items-center gap-1 py-6">
               Brands
@@ -167,9 +167,6 @@ export default function Navbar({ categories = [], brands = [] }: NavbarProps) {
 
           <Link href="/wholesale" className="text-sm font-medium hover:text-gray-600 transition">
             Wholesale
-          </Link>
-          <Link href="/gallery" className="text-sm font-medium hover:text-gray-600 transition">
-            Gallery
           </Link>
         </nav>
 
@@ -287,7 +284,6 @@ export default function Navbar({ categories = [], brands = [] }: NavbarProps) {
                 )}
 
                 <MobileNavLink href="/wholesale">Wholesale</MobileNavLink>
-                <MobileNavLink href="/gallery">Gallery</MobileNavLink>
                 {dashboardLink && (
                   <MobileNavLink href={dashboardLink.href}>
                     <span className="flex items-center gap-2">

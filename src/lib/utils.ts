@@ -15,8 +15,14 @@ export function formatPrice(price: number) {
 export function generateSlug(str: string) {
   return str
     .toLowerCase()
+    .replace(/&/g, 'and')
     .replace(/[^a-z0-9]+/g, '-')
     .replace(/^-+|-+$/g, '')
+}
+
+export function getProductUrl(slugOrName: string) {
+  const safeSlug = generateSlug(slugOrName || '')
+  return safeSlug ? `/products/${encodeURIComponent(safeSlug)}` : '/shop'
 }
 
 type FlashSaleDiscount = {

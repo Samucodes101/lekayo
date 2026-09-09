@@ -3,7 +3,7 @@
 import Image from "next/image"
 import Link from "next/link"
 import { ProductWithVariants } from "@/types"
-import { formatPrice, getEffectivePrice, hasFlashSaleDiscount } from "@/lib/utils"
+import { formatPrice, getEffectivePrice, hasFlashSaleDiscount, getProductUrl } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { Heart } from "lucide-react"
 import { useWishlistStore } from "@/stores/wishlistStore"
@@ -74,7 +74,7 @@ export default function ProductCard({ product }: ProductCardProps) {
           </div>
         </div>
       </QuickView>
-      <Link href={`/products/${product.slug}`}>
+      <Link href={getProductUrl(product.slug || product.name)}>
         <div className="mt-4">
           <h3 className="text-sm font-medium line-clamp-2">{product.name}</h3>
           <p className="text-sm text-gray-500">{product.brand?.name || "Unknown Brand"}</p>

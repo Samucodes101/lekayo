@@ -3,7 +3,7 @@
 import { useState } from "react"
 import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog"
 import Image from "next/image"
-import { formatPrice, getEffectivePrice, hasFlashSaleDiscount } from "@/lib/utils"
+import { formatPrice, getEffectivePrice, hasFlashSaleDiscount, getProductUrl } from "@/lib/utils"
 import AddToCartButton from "./AddToCartButton"
 import { Button } from "@/components/ui/button"
 interface QuickViewProps {
@@ -61,7 +61,7 @@ export default function QuickView({ product, children }: QuickViewProps) {
               className="w-full mt-2"
               onClick={() => {
                 setOpen(false)
-                window.location.href = `/products/${product.slug}`
+                window.location.href = getProductUrl(product.slug || product.name)
               }}
             >
               View Full Details

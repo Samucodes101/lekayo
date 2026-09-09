@@ -6,16 +6,22 @@ import { prisma } from "@/lib/db"
 import ProductDetailClient from "@/components/shared/ProductDetailClient"
 import Breadcrumb from "@/components/shared/Breadcrumb"
 import { fetchActiveFlashSales, resolveCheckoutPrice } from "@/lib/flashSale"
-import { generateSlug } from "@/lib/utils"
+import { generateSlug, getProductUrl } from "@/lib/utils"
 
 export default async function ProductPage({ params }: { params: { slug: string } }) {
-  const decodedSlug = decodeURIComponent(params.slug)
-  const normalizedSlug = generateSlug(decodedSlug)
+  let decodedSlug = params.slug
+  try {
+    decodedSlug = decodeURIComponent(params.slug)
+  } catch {
+    decodedSlug = params.slug
+  }
+
+  const requestedSlug = generateSlug(decodedSlug)
   const [product, activeSales] = await Promise.all([
     prisma.product.findFirst({
       where: {
         status: "PUBLISHED",
-        OR: [{ slug: params.slug }, { slug: decodedSlug }, { slug: normalizedSlug }],
+        OR: [{ slug: params.slug }, { slug: decodedSlug }, { slug: requestedSlug }],
       },
       include: {
         brand: true,
@@ -36,7 +42,11 @@ export default async function ProductPage({ params }: { params: { slug: string }
     fetchActiveFlashSales(),
   ])
   if (!product) notFound()
-  if (product.slug !== params.slug) redirect(`/products/${product.slug}`)
+
+  const canonicalProductSlug = generateSlug(product.slug)
+  if (canonicalProductSlug !== requestedSlug) {
+    redirect(`/products/${encodeURIComponent(canonicalProductSlug)}`)
+  }
 
   // Resolve criteria-based flash sale discount (category/brand/all)
   const flashResolved = resolveCheckoutPrice(product, null, activeSales)
@@ -57,7 +67,7 @@ export default async function ProductPage({ params }: { params: { slug: string }
 
   return (
     <div className="container mx-auto px-4 py-8">
-      <Breadcrumb items={[{ name: product.category.name, href: `/shop/${product.category.slug}` }, { name: product.name, href: `/products/${product.slug}` }]} />
+      <Breadcrumb items={[{ name: product.category.name, href: `/shop/${product.category.slug}` }, { name: product.name, href: getProductUrl(product.slug || product.name) }]} />
       <ProductDetailClient
         product={{
           ...product,

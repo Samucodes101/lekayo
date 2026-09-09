@@ -4,6 +4,7 @@ import { useEffect, useState } from "react"
 import { CommandDialog, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command"
 import { useRouter } from "next/navigation"
 import { useDebounce } from "@/hooks/useDebounce"
+import { getProductUrl } from "@/lib/utils"
 
 export default function CommandPalette() {
   const [open, setOpen] = useState(false)
@@ -43,7 +44,7 @@ export default function CommandPalette() {
         <CommandEmpty>No results found.</CommandEmpty>
         <CommandGroup heading="Products">
           {results.map((product) => (
-            <CommandItem key={product.id} onSelect={() => runCommand(() => router.push(`/products/${product.slug}`))}>
+            <CommandItem key={product.id} onSelect={() => runCommand(() => router.push(getProductUrl(product.slug || product.name)))}>
               {product.name}
             </CommandItem>
           ))}
