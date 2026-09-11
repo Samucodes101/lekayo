@@ -44,7 +44,7 @@ const ALL_ROLES: Role[] = [
 interface UserRow {
   id: string
   name: string | null
-  email: string
+  email: string | null
   role: Role
   createdAt: string
 }
@@ -53,9 +53,10 @@ interface UserFormData {
   name: string
   email: string
   role: Role
+  password: string
 }
 
-const emptyForm: UserFormData = { name: "", email: "", role: Role.CUSTOMER }
+const emptyForm: UserFormData = { name: "", email: "", role: Role.CUSTOMER, password: "" }
 
 export default function UsersPage() {
   const router = useRouter()
@@ -105,7 +106,7 @@ export default function UsersPage() {
   // Open dialog for edit
   const openEdit = (user: UserRow) => {
     setEditingUser(user)
-    setForm({ name: user.name || "", email: user.email, role: user.role })
+    setForm({ name: user.name || "", email: user.email || "", role: user.role, password: "" })
     setDialogOpen(true)
   }
 
@@ -115,6 +116,14 @@ export default function UsersPage() {
       toast({ title: "Name and email are required", variant: "destructive" })
       return
     }
+    if (!editingUser && form.password.length < 8) {
+      toast({ title: "Password must be at least 8 characters", variant: "destructive" })
+      return
+    }
+    if (editingUser && form.password.length > 0 && form.password.length < 8) {
+      toast({ title: "Password must be at least 8 characters", variant: "destructive" })
+      return
+    }
 
     setSubmitting(true)
     try {
@@ -122,16 +131,8 @@ export default function UsersPage() {
         await updateUser(editingUser.id, form)
         toast({ title: "User updated" })
       } else {
-        const result = await createUser(form)
-        toast({
-          title: "User created",
-          description: (
-            <span>
-              Reset link:{" "}
-              <code className="text-xs break-all">{result.resetLink}</code>
-            </span>
-          ),
-        })
+        await createUser(form)
+        toast({ title: "User created" })
       }
       setDialogOpen(false)
       router.refresh()
@@ -297,6 +298,20 @@ export default function UsersPage() {
                   ))}
                 </SelectContent>
               </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="password">
+                Password{editingUser ? " (leave blank to keep current)" : ""}
+              </Label>
+              <Input
+                id="password"
+                type="password"
+                value={form.password}
+                onChange={(e) => setForm({ ...form, password: e.target.value })}
+                placeholder={editingUser ? "New password" : "Password"}
+                autoComplete={editingUser ? "new-password" : "new-password"}
+              />
             </div>
           </div>
 

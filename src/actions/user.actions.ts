@@ -6,7 +6,6 @@ import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth"
 import { Role } from "@prisma/client"
 import bcrypt from "bcryptjs"
-import crypto from "crypto"
 
 function ensureAdmin(session: Awaited<ReturnType<typeof getServerSession>>) {
   const role = (session as any)?.user?.role
@@ -26,6 +25,7 @@ export async function createUser(data: {
   name: string
   email: string
   role: Role
+  password: string
 }) {
   const session = await getServerSession(authOptions)
   ensureAdmin(session)
@@ -41,9 +41,11 @@ export async function createUser(data: {
     throw new Error("A user with this email already exists.")
   }
 
-  // Generate a random secure password (32 bytes → 64 hex chars)
-  const rawPassword = crypto.randomBytes(32).toString("hex")
-  const hashedPassword = await bcrypt.hash(rawPassword, 10)
+  if (data.password.length < 8) {
+    throw new Error("Password must be at least 8 characters.")
+  }
+
+  const hashedPassword = await bcrypt.hash(data.password, 10)
 
   // Create the user with the hashed password
   const user = await prisma.user.create({
@@ -55,29 +57,10 @@ export async function createUser(data: {
     },
   })
 
-  if (!user.email) {
-    throw new Error("An email is required for an account with a password.")
-  }
-
-  // Immediately create a PasswordResetToken so the admin can share a set-password link
-  const resetToken = crypto.randomBytes(32).toString("hex")
-  await prisma.passwordResetToken.create({
-    data: {
-      email: user.email,
-      token: resetToken,
-      expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000), // 24 hours
-    },
-  })
-
-  // Build the reset link — the existing forgot-password page handles
-  // the "set new password" flow when given a valid token via query param.
-  const resetLink = `${process.env.NEXT_PUBLIC_APP_URL}/forgot-password?token=${resetToken}`
-
   revalidatePath("/admin/users")
 
   return {
     user: { id: user.id, name: user.name, email: user.email, role: user.role },
-    resetLink,
   }
 }
 
@@ -90,6 +73,7 @@ export async function updateUser(
     name?: string
     email?: string
     role?: Role
+    password?: string
   },
 ) {
   const session = await getServerSession(authOptions)
@@ -113,6 +97,12 @@ export async function updateUser(
   const updateData: any = {}
   if (data.name !== undefined) updateData.name = data.name
   if (data.role !== undefined) updateData.role = data.role
+  if (data.password !== undefined && data.password.length > 0) {
+    if (data.password.length < 8) {
+      throw new Error("Password must be at least 8 characters.")
+    }
+    updateData.password = await bcrypt.hash(data.password, 10)
+  }
 
   if (data.email !== undefined && data.email !== target.email) {
     const emailExists = await prisma.user.findUnique({
