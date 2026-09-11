@@ -24,7 +24,12 @@ export default function CSOrdersPage() {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-serif">Order Search</h1>
+      <div className="flex items-center justify-between gap-4">
+        <h1 className="text-2xl font-serif">Order Search</h1>
+        <Button asChild>
+          <Link href="/cs/orders/new">New Walk-in Order</Link>
+        </Button>
+      </div>
       <div className="flex gap-2">
         <Input placeholder="Search by order #" value={search} onChange={(e) => setSearch(e.target.value)} className="max-w-md" />
         <Button onClick={handleSearch} disabled={loading}>Search</Button>
