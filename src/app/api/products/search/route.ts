@@ -10,9 +10,10 @@ export async function GET(req: NextRequest) {
         { name: { contains: q, mode: "insensitive" } },
         { sku: { contains: q, mode: "insensitive" } },
         { brand: { name: { contains: q, mode: "insensitive" } } },
+        { category: { name: { contains: q, mode: "insensitive" } } },
       ],
     },
-    include: { brand: true, variants: true },
+    include: { brand: true, category: true, variants: true },
     take: 20,
   })
   return NextResponse.json(products)

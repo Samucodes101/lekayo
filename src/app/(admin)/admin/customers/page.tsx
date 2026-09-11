@@ -1,9 +1,5 @@
 import { prisma } from "@/lib/db"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { Input } from "@/components/ui/input"
-import { Button } from "@/components/ui/button"
-import { formatPrice } from "@/lib/utils"
-import Link from "next/link"
+import { SearchableCustomers } from "@/components/admin/SearchableAdminTables"
 
 export default async function CustomersPage() {
   const customers = await prisma.user.findMany({
@@ -23,38 +19,9 @@ export default async function CustomersPage() {
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <h1 className="text-2xl font-serif">Customers</h1>
-        <div className="flex gap-2">
-          <Input placeholder="Search customers..." className="w-48" />
-          <Button variant="outline">Search</Button>
-        </div>
       </div>
 
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead>Name</TableHead>
-            <TableHead>Email</TableHead>
-            <TableHead>Orders</TableHead>
-            <TableHead>Total Spent</TableHead>
-            <TableHead>Joined</TableHead>
-            <TableHead></TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {customersWithStats.map((c) => (
-            <TableRow key={c.id}>
-              <TableCell>{c.name || "N/A"}</TableCell>
-              <TableCell>{c.email}</TableCell>
-              <TableCell>{c.orderCount}</TableCell>
-              <TableCell>{formatPrice(c.totalSpent)}</TableCell>
-              <TableCell>{new Date(c.createdAt).toLocaleDateString()}</TableCell>
-              <TableCell>
-                <Link href={`/admin/customers/${c.id}`} className="text-blue-600 underline">View</Link>
-              </TableCell>
-            </TableRow>
-          ))}
-        </TableBody>
-      </Table>
+      <SearchableCustomers customers={customersWithStats.map((customer) => ({ ...customer, createdAt: customer.createdAt.toISOString() }))} />
     </div>
   )
 }

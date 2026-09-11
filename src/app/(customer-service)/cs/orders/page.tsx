@@ -7,20 +7,11 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { formatPrice } from "@/lib/utils"
 import Link from "next/link"
+import { useLiveSearch } from "@/hooks/useLiveSearch"
 
 export default function CSOrdersPage() {
   const [search, setSearch] = useState("")
-  const [results, setResults] = useState<any[]>([])
-  const [loading, setLoading] = useState(false)
-
-  const handleSearch = async () => {
-    if (search.length < 2) return
-    setLoading(true)
-    const res = await fetch(`/api/orders/search?q=${search}`)
-    const data = await res.json()
-    setResults(data)
-    setLoading(false)
-  }
+  const { results, loading } = useLiveSearch<any>(search, "/api/orders/search")
 
   return (
     <div className="space-y-6">
@@ -30,10 +21,8 @@ export default function CSOrdersPage() {
           <Link href="/cs/orders/new">New Walk-in Order</Link>
         </Button>
       </div>
-      <div className="flex gap-2">
-        <Input placeholder="Search by order #" value={search} onChange={(e) => setSearch(e.target.value)} className="max-w-md" />
-        <Button onClick={handleSearch} disabled={loading}>Search</Button>
-      </div>
+      <Input placeholder="Search by order #" value={search} onChange={(e) => setSearch(e.target.value)} className="max-w-md" />
+      {loading && <p className="text-sm text-gray-500">Searching...</p>}
       <Card>
         <CardHeader><CardTitle>Results</CardTitle></CardHeader>
         <CardContent>

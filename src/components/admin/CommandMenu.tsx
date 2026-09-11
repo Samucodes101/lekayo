@@ -3,11 +3,13 @@
 import { useEffect, useState } from "react"
 import { CommandDialog, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command"
 import { useRouter } from "next/navigation"
+import { useDebounce } from "@/hooks/useDebounce"
 
 export function CommandMenu() {
   const [open, setOpen] = useState(false)
   const [results, setResults] = useState<any[]>([])
   const [search, setSearch] = useState("")
+  const debouncedSearch = useDebounce(search, 300)
   const router = useRouter()
 
   useEffect(() => {
@@ -22,10 +24,19 @@ export function CommandMenu() {
   }, [])
 
   useEffect(() => {
-    if (search.length > 1) {
-      fetch(`/api/search?q=${search}`).then(res => res.json()).then(setResults)
+    if (debouncedSearch.length < 2) {
+      setResults([])
+      return
     }
-  }, [search])
+    fetch(`/api/search?q=${encodeURIComponent(debouncedSearch)}`).then(res => res.json()).then(setResults)
+  }, [debouncedSearch])
+
+  useEffect(() => {
+    if (!open) {
+      setSearch("")
+      setResults([])
+    }
+  }, [open])
 
   const runCommand = (href: string) => {
     setOpen(false)

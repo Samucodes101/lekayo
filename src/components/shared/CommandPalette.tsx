@@ -25,12 +25,21 @@ export default function CommandPalette() {
   }, [])
 
   useEffect(() => {
-    if (debouncedSearch.length > 1) {
-      fetch(`/api/search?q=${debouncedSearch}`)
-        .then(res => res.json())
-        .then(data => setResults(data))
+    if (debouncedSearch.length < 2) {
+      setResults([])
+      return
     }
+    fetch(`/api/search?q=${encodeURIComponent(debouncedSearch)}`)
+      .then(res => res.json())
+      .then(data => setResults(data))
   }, [debouncedSearch])
+
+  useEffect(() => {
+    if (!open) {
+      setSearch("")
+      setResults([])
+    }
+  }, [open])
 
   const runCommand = (command: () => void) => {
     setOpen(false)

@@ -7,6 +7,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { formatPrice } from "@/lib/utils"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import { useLiveSearch } from "@/hooks/useLiveSearch"
+import { X } from "lucide-react"
 
 type Variant = {
   id: string
@@ -31,12 +33,12 @@ type LineItem = { variant: Variant; quantity: number }
 export default function NewCSOrderPage() {
   const router = useRouter()
   const [productQuery, setProductQuery] = useState("")
-  const [productResults, setProductResults] = useState<Variant[]>([])
+  const { results: productResults } = useLiveSearch<Variant>(productQuery, "/api/inventory/search")
   const [previewVariant, setPreviewVariant] = useState<Variant | null>(null)
   const [previewQuantity, setPreviewQuantity] = useState(1)
   const [items, setItems] = useState<LineItem[]>([])
   const [customerQuery, setCustomerQuery] = useState("")
-  const [customerResults, setCustomerResults] = useState<Customer[]>([])
+  const { results: customerResults } = useLiveSearch<Customer>(customerQuery, "/api/customers/search")
   const [customer, setCustomer] = useState<Customer | null>(null)
   const [name, setName] = useState("")
   const [phone, setPhone] = useState("")
@@ -44,18 +46,6 @@ export default function NewCSOrderPage() {
   const [paymentMethod, setPaymentMethod] = useState("Cash")
   const [error, setError] = useState("")
   const [saving, setSaving] = useState(false)
-
-  async function searchProducts() {
-    if (productQuery.trim().length < 2) return
-    const response = await fetch(`/api/inventory/search?q=${encodeURIComponent(productQuery.trim())}`)
-    setProductResults(await response.json())
-  }
-
-  async function searchCustomers() {
-    if (customerQuery.trim().length < 2) return
-    const response = await fetch(`/api/customers/search?q=${encodeURIComponent(customerQuery.trim())}`)
-    setCustomerResults(await response.json())
-  }
 
   function addItem(variant: Variant, quantity = 1) {
     setItems((current) => {
@@ -69,6 +59,10 @@ export default function NewCSOrderPage() {
     })
     setPreviewVariant(null)
     setPreviewQuantity(1)
+  }
+
+  function removeItem(variantId: string) {
+    setItems((current) => current.filter((item) => item.variant.id !== variantId))
   }
 
   async function submitOrder(event: React.FormEvent<HTMLFormElement>) {
@@ -120,10 +114,7 @@ export default function NewCSOrderPage() {
         <Card>
           <CardHeader><CardTitle>Products</CardTitle></CardHeader>
           <CardContent className="space-y-4">
-            <div className="flex gap-2">
-              <Input value={productQuery} onChange={(event) => setProductQuery(event.target.value)} placeholder="Search product or SKU" />
-              <Button type="button" onClick={searchProducts}>Search</Button>
-            </div>
+            <Input value={productQuery} onChange={(event) => setProductQuery(event.target.value)} placeholder="Search product or SKU" />
             <div className="space-y-2">
               {productResults.map((variant) => (
                 <button
@@ -144,9 +135,12 @@ export default function NewCSOrderPage() {
               ))}
             </div>
             {items.map((item) => (
-              <div key={item.variant.id} className="flex items-center justify-between border-t pt-3">
-                <span>{item.variant.product.name} ({item.variant.sku})</span>
-                <Input className="w-20" type="number" min={1} max={item.variant.stock} value={item.quantity} onChange={(event) => setItems((current) => current.map((line) => line.variant.id === item.variant.id ? { ...line, quantity: Number(event.target.value) } : line))} />
+              <div key={item.variant.id} className="flex items-center gap-3 border-t pt-3">
+                <span className="min-w-0 flex-1">{item.variant.product.name} ({item.variant.sku})</span>
+                <Input aria-label={`Quantity for ${item.variant.product.name}`} className="w-20" type="number" min={1} max={item.variant.stock} value={item.quantity} onChange={(event) => setItems((current) => current.map((line) => line.variant.id === item.variant.id ? { ...line, quantity: Number(event.target.value) } : line))} />
+                <Button type="button" variant="ghost" size="icon" aria-label={`Remove ${item.variant.product.name}`} onClick={() => removeItem(item.variant.id)}>
+                  <X className="h-4 w-4" />
+                </Button>
               </div>
             ))}
           </CardContent>
@@ -157,10 +151,9 @@ export default function NewCSOrderPage() {
           <CardContent className="space-y-4">
             <div className="flex gap-2">
               <Input value={customerQuery} onChange={(event) => setCustomerQuery(event.target.value)} placeholder="Find by name, email, or phone" />
-              <Button type="button" onClick={searchCustomers}>Find</Button>
             </div>
             {customerResults.map((result) => (
-              <button type="button" key={result.id} onClick={() => { setCustomer(result); setCustomerResults([]) }} className="block w-full border p-2 text-left hover:bg-gray-50">
+              <button type="button" key={result.id} onClick={() => setCustomer(result)} className="block w-full border p-2 text-left hover:bg-gray-50">
                 {result.name || "Unnamed"} · {result.email || result.phone || "No contact"}
               </button>
             ))}

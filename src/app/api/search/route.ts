@@ -5,9 +5,9 @@ export async function GET(req: NextRequest) {
   const q = req.nextUrl.searchParams.get("q") || ""
   if (q.length < 2) return NextResponse.json([])
   const products = await prisma.product.findMany({
-    where: { OR: [{ name: { contains: q, mode: "insensitive" } }, { sku: { contains: q, mode: "insensitive" } }, { brand: { name: { contains: q, mode: "insensitive" } } }], status: "PUBLISHED" },
+    where: { OR: [{ name: { contains: q, mode: "insensitive" } }, { sku: { contains: q, mode: "insensitive" } }, { brand: { name: { contains: q, mode: "insensitive" } } }, { category: { name: { contains: q, mode: "insensitive" } } }], status: "PUBLISHED" },
     take: 10,
-    include: { variants: { include: { images: true } }, brand: true },
+    include: { variants: { include: { images: true } }, brand: true, category: true },
   })
   return NextResponse.json(products)
 }
