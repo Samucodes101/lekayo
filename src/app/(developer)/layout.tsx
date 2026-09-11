@@ -10,9 +10,9 @@ export default async function DeveloperLayout({ children }: { children: React.Re
     redirect("/")
   }
   return (
-    <div className="flex min-h-screen">
+    <div className="dev-shell flex min-h-screen flex-col md:flex-row">
       <DevNav />
-      <main className="flex-1 p-6 bg-gray-50">{children}</main>
+      <main className="min-w-0 flex-1 bg-gray-50 p-4 md:p-6">{children}</main>
     </div>
   )
 }

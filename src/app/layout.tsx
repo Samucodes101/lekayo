@@ -42,8 +42,10 @@ export default async function RootLayout({
     <html lang="en" className={raleway.variable}>
       <body className={raleway.className}>
         <Providers>
-          <Navbar categories={categories} brands={brands} />
-          <main className="min-h-screen">{children}</main>
+          <div className="site-navbar">
+            <Navbar categories={categories} brands={brands} />
+          </div>
+          <main className="app-main min-h-screen">{children}</main>
           <Footer />
           <Toaster />
           <CommandPalette />

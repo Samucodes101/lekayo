@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/db"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import { formatPrice } from "@/lib/utils"
 
 export default async function InventoryAnalyticsPage() {
   const variants = await prisma.productVariant.findMany({
@@ -20,7 +21,7 @@ export default async function InventoryAnalyticsPage() {
       <div className="grid gap-4 md:grid-cols-3">
         <Card>
           <CardHeader><CardTitle>Total Inventory Value</CardTitle></CardHeader>
-          <CardContent><p className="text-3xl font-bold">${totalValue.toFixed(2)}</p></CardContent>
+          <CardContent><p className="text-3xl font-bold">{formatPrice(totalValue)}</p></CardContent>
         </Card>
         <Card>
           <CardHeader><CardTitle>Low Stock Items</CardTitle></CardHeader>

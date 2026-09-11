@@ -10,9 +10,9 @@ export default async function CustomerServiceLayout({ children }: { children: Re
     redirect("/")
   }
   return (
-    <div className="cs-shell flex min-h-screen">
+    <div className="cs-shell flex min-h-screen flex-col md:flex-row">
       <CSNav />
-      <main className="flex-1 p-6">{children}</main>
+      <main className="min-w-0 flex-1 p-4 md:p-6">{children}</main>
     </div>
   )
 }

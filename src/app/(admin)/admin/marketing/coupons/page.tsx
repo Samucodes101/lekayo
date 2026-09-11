@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
+import { formatPrice } from "@/lib/utils"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
@@ -94,7 +95,7 @@ export default function CouponsPage() {
             <TableRow key={c.id}>
               <TableCell className="font-mono">{c.code}</TableCell>
               <TableCell>{c.discountType}</TableCell>
-              <TableCell>{c.discountType === "PERCENTAGE" ? `${c.discountValue}%` : `$${c.discountValue}`}</TableCell>
+              <TableCell>{c.discountType === "PERCENTAGE" ? `${c.discountValue}%` : formatPrice(c.discountValue)}</TableCell>
               <TableCell>{c.usedCount} / {c.usageLimit || "∞"}</TableCell>
               <TableCell>{c.active ? "✓" : "-"}</TableCell>
               <TableCell>

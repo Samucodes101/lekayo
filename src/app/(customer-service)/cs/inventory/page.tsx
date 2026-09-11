@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { formatPrice } from "@/lib/utils"
 
 export default function CSInventoryPage() {
   const [search, setSearch] = useState("")
@@ -45,7 +46,7 @@ export default function CSInventoryPage() {
                   <TableCell>{v.product.name}</TableCell>
                   <TableCell>{v.sku}</TableCell>
                   <TableCell className={v.stock < 10 ? "text-red-600" : ""}>{v.stock}</TableCell>
-                  <TableCell>${(v.price || v.product.basePrice).toFixed(2)}</TableCell>
+                  <TableCell>{formatPrice(v.price || v.product.basePrice)}</TableCell>
                 </TableRow>
               ))}
             </TableBody>

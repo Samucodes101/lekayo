@@ -58,11 +58,32 @@
   }
   @media print {
     .no-print,
+    .site-navbar,
+    .site-footer,
     .cs-shell > aside,
+    .admin-shell > aside,
     .receipt-print-page > .text-center {
       display: none !important;
     }
+    @page {
+      margin: 0;
+    }
+    html,
+    body,
+    .app-main,
+    .cs-shell,
+    .admin-shell,
+    .receipt-print-page {
+      min-height: 0 !important;
+      height: auto !important;
+      margin: 0 !important;
+      padding: 0 !important;
+      overflow: visible !important;
+    }
     .cs-shell > main {
+      padding: 0 !important;
+    }
+    .admin-shell > main {
       padding: 0 !important;
     }
     .receipt-print-page,
@@ -75,6 +96,12 @@
       box-shadow: none !important;
     }
     #receipt {
+      page-break-inside: avoid;
+    }
+    #receipt table,
+    #receipt tr,
+    #receipt td,
+    #receipt th {
       page-break-inside: avoid;
     }
   }

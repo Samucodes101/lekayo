@@ -187,7 +187,7 @@ export default function FlashSaleForm({ sale, onSave }: { sale?: any; onSave?: (
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="PERCENTAGE">%</SelectItem>
-                        <SelectItem value="FIXED">$</SelectItem>
+                        <SelectItem value="FIXED">₦</SelectItem>
                       </SelectContent>
                     </Select>
                   </FormControl>
@@ -232,7 +232,7 @@ export default function FlashSaleForm({ sale, onSave }: { sale?: any; onSave?: (
                   <FormItem>
                     <Select onValueChange={field.onChange} defaultValue={field.value}>
                       <FormControl><SelectTrigger><SelectValue placeholder="Type" /></SelectTrigger></FormControl>
-                      <SelectContent><SelectItem value="PERCENTAGE">%</SelectItem><SelectItem value="FIXED">$</SelectItem></SelectContent>
+                      <SelectContent><SelectItem value="PERCENTAGE">%</SelectItem><SelectItem value="FIXED">₦</SelectItem></SelectContent>
                     </Select>
                     <FormMessage />
                   </FormItem>
@@ -273,7 +273,7 @@ export default function FlashSaleForm({ sale, onSave }: { sale?: any; onSave?: (
                   <FormItem>
                     <Select onValueChange={field.onChange} defaultValue={field.value}>
                       <FormControl><SelectTrigger><SelectValue placeholder="Type" /></SelectTrigger></FormControl>
-                      <SelectContent><SelectItem value="PERCENTAGE">%</SelectItem><SelectItem value="FIXED">$</SelectItem></SelectContent>
+                      <SelectContent><SelectItem value="PERCENTAGE">%</SelectItem><SelectItem value="FIXED">₦</SelectItem></SelectContent>
                     </Select>
                     <FormMessage />
                   </FormItem>
@@ -317,7 +317,7 @@ export default function FlashSaleForm({ sale, onSave }: { sale?: any; onSave?: (
                   <FormItem>
                     <Select onValueChange={field.onChange} defaultValue={field.value}>
                       <FormControl><SelectTrigger><SelectValue placeholder="Type" /></SelectTrigger></FormControl>
-                      <SelectContent><SelectItem value="PERCENTAGE">%</SelectItem><SelectItem value="FIXED">$</SelectItem></SelectContent>
+                      <SelectContent><SelectItem value="PERCENTAGE">%</SelectItem><SelectItem value="FIXED">₦</SelectItem></SelectContent>
                     </Select>
                     <FormMessage />
                   </FormItem>
@@ -359,7 +359,7 @@ export default function FlashSaleForm({ sale, onSave }: { sale?: any; onSave?: (
                   <FormItem>
                     <Select onValueChange={field.onChange} defaultValue={field.value}>
                       <FormControl><SelectTrigger><SelectValue placeholder="Type" /></SelectTrigger></FormControl>
-                      <SelectContent><SelectItem value="PERCENTAGE">%</SelectItem><SelectItem value="FIXED">$</SelectItem></SelectContent>
+                      <SelectContent><SelectItem value="PERCENTAGE">%</SelectItem><SelectItem value="FIXED">₦</SelectItem></SelectContent>
                     </Select>
                     <FormMessage />
                   </FormItem>

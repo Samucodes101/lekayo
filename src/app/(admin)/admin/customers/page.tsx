@@ -2,6 +2,7 @@ import { prisma } from "@/lib/db"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
+import { formatPrice } from "@/lib/utils"
 import Link from "next/link"
 
 export default async function CustomersPage() {
@@ -45,7 +46,7 @@ export default async function CustomersPage() {
               <TableCell>{c.name || "N/A"}</TableCell>
               <TableCell>{c.email}</TableCell>
               <TableCell>{c.orderCount}</TableCell>
-              <TableCell>${c.totalSpent.toFixed(2)}</TableCell>
+              <TableCell>{formatPrice(c.totalSpent)}</TableCell>
               <TableCell>{new Date(c.createdAt).toLocaleDateString()}</TableCell>
               <TableCell>
                 <Link href={`/admin/customers/${c.id}`} className="text-blue-600 underline">View</Link>
