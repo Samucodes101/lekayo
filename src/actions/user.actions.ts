@@ -29,6 +29,7 @@ export async function createUser(data: {
 }) {
   const session = await getServerSession(authOptions)
   ensureAdmin(session)
+  const email = data.email.trim().toLowerCase()
 
   // Only SUPER_ADMIN can create another SUPER_ADMIN
   if (data.role === Role.SUPER_ADMIN && !isSuperAdmin(session)) {
@@ -36,7 +37,7 @@ export async function createUser(data: {
   }
 
   // Check if email already exists
-  const existing = await prisma.user.findUnique({ where: { email: data.email } })
+  const existing = await prisma.user.findUnique({ where: { email } })
   if (existing) {
     throw new Error("A user with this email already exists.")
   }
@@ -51,7 +52,7 @@ export async function createUser(data: {
   const user = await prisma.user.create({
     data: {
       name: data.name,
-      email: data.email,
+      email,
       password: hashedPassword,
       role: data.role,
     },
@@ -104,14 +105,15 @@ export async function updateUser(
     updateData.password = await bcrypt.hash(data.password, 10)
   }
 
-  if (data.email !== undefined && data.email !== target.email) {
+  const normalizedEmail = data.email?.trim().toLowerCase()
+  if (normalizedEmail !== undefined && normalizedEmail !== target.email) {
     const emailExists = await prisma.user.findUnique({
-      where: { email: data.email },
+      where: { email: normalizedEmail },
     })
     if (emailExists) {
       throw new Error("A user with this email already exists.")
     }
-    updateData.email = data.email
+    updateData.email = normalizedEmail
     updateData.emailVerified = null // new email must be re-verified
   }
 
