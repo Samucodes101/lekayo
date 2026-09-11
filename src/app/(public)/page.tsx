@@ -76,7 +76,6 @@ export default async function HomePage() {
   const categories = await prisma.category.findMany({
     where: { featured: true },
     orderBy: { order: "asc" },
-    take: 6,
   })
 
   // Map section types to components
