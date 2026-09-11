@@ -11,7 +11,11 @@ export async function GET(req: NextRequest) {
         { product: { name: { contains: q, mode: "insensitive" } } },
       ],
     },
-    include: { product: true },
+    include: {
+      product: true,
+      color: true,
+      images: { orderBy: { order: "asc" }, take: 1 },
+    },
     take: 20,
   })
   return NextResponse.json(variants)

@@ -6,12 +6,16 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { formatPrice } from "@/lib/utils"
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 
 type Variant = {
   id: string
   sku: string
   price: number | null
   stock: number
+  sizeValue: string | null
+  color: { name: string; hexCode: string } | null
+  images: { url: string }[]
   product: { name: string; basePrice: number; salePrice: number | null }
 }
 
@@ -28,6 +32,8 @@ export default function NewCSOrderPage() {
   const router = useRouter()
   const [productQuery, setProductQuery] = useState("")
   const [productResults, setProductResults] = useState<Variant[]>([])
+  const [previewVariant, setPreviewVariant] = useState<Variant | null>(null)
+  const [previewQuantity, setPreviewQuantity] = useState(1)
   const [items, setItems] = useState<LineItem[]>([])
   const [customerQuery, setCustomerQuery] = useState("")
   const [customerResults, setCustomerResults] = useState<Customer[]>([])
@@ -51,16 +57,18 @@ export default function NewCSOrderPage() {
     setCustomerResults(await response.json())
   }
 
-  function addItem(variant: Variant) {
+  function addItem(variant: Variant, quantity = 1) {
     setItems((current) => {
       const existing = current.find((item) => item.variant.id === variant.id)
       if (existing) {
         return current.map((item) => item.variant.id === variant.id
-          ? { ...item, quantity: Math.min(item.quantity + 1, variant.stock) }
+          ? { ...item, quantity: Math.min(item.quantity + quantity, variant.stock) }
           : item)
       }
-      return [...current, { variant, quantity: 1 }]
+      return [...current, { variant, quantity: Math.min(quantity, variant.stock) }]
     })
+    setPreviewVariant(null)
+    setPreviewQuantity(1)
   }
 
   async function submitOrder(event: React.FormEvent<HTMLFormElement>) {
@@ -118,9 +126,20 @@ export default function NewCSOrderPage() {
             </div>
             <div className="space-y-2">
               {productResults.map((variant) => (
-                <button type="button" key={variant.id} onClick={() => addItem(variant)} className="flex w-full justify-between border p-3 text-left hover:bg-gray-50">
-                  <span>{variant.product.name} <span className="text-sm text-gray-500">({variant.sku})</span></span>
-                  <span>{formatPrice(variant.price ?? variant.product.salePrice ?? variant.product.basePrice)} · {variant.stock} left</span>
+                <button
+                  type="button"
+                  key={variant.id}
+                  onClick={() => { setPreviewVariant(variant); setPreviewQuantity(1) }}
+                  className="flex w-full items-center gap-3 border p-3 text-left hover:bg-gray-50"
+                >
+                  <div className="h-14 w-14 shrink-0 overflow-hidden rounded bg-gray-100">
+                    {variant.images[0] ? <img src={variant.images[0].url} alt="" className="h-full w-full object-cover" /> : <span className="flex h-full items-center justify-center text-xs text-gray-400">No image</span>}
+                  </div>
+                  <span className="min-w-0 flex-1">
+                    <span className="block font-medium">{variant.product.name}</span>
+                    <span className="block text-sm text-gray-500">SKU: {variant.sku}{variant.sizeValue ? ` · Size ${variant.sizeValue}` : ""}{variant.color ? ` · ${variant.color.name}` : ""}</span>
+                  </span>
+                  <span className="shrink-0 text-right text-sm">{formatPrice(variant.price ?? variant.product.salePrice ?? variant.product.basePrice)}<br />{variant.stock} left</span>
                 </button>
               ))}
             </div>
@@ -162,6 +181,38 @@ export default function NewCSOrderPage() {
           </CardContent>
         </Card>
       </div>
+
+      <Dialog open={previewVariant !== null} onOpenChange={(open) => !open && setPreviewVariant(null)}>
+        <DialogContent className="max-w-md">
+          {previewVariant && (
+            <>
+              <DialogHeader>
+                <DialogTitle>Preview variant</DialogTitle>
+              </DialogHeader>
+              <div className="space-y-4">
+                <div className="aspect-square overflow-hidden rounded bg-gray-100">
+                  {previewVariant.images[0] ? <img src={previewVariant.images[0].url} alt={previewVariant.product.name} className="h-full w-full object-contain" /> : <div className="flex h-full items-center justify-center text-sm text-gray-400">No product image</div>}
+                </div>
+                <div>
+                  <h2 className="text-lg font-semibold">{previewVariant.product.name}</h2>
+                  <p className="text-sm text-gray-500">SKU: {previewVariant.sku}</p>
+                  <div className="mt-2 flex flex-wrap gap-2 text-sm">
+                    {previewVariant.sizeValue && <span className="rounded border px-2 py-1">Size: {previewVariant.sizeValue}</span>}
+                    {previewVariant.color && <span className="flex items-center gap-2 rounded border px-2 py-1"><span className="h-3 w-3 rounded-full border" style={{ backgroundColor: previewVariant.color.hexCode }} />{previewVariant.color.name}</span>}
+                    <span className="rounded border px-2 py-1">{previewVariant.stock} in stock</span>
+                  </div>
+                  <p className="mt-3 text-lg font-semibold">{formatPrice(previewVariant.price ?? previewVariant.product.salePrice ?? previewVariant.product.basePrice)}</p>
+                </div>
+                <div className="flex items-center gap-3">
+                  <label htmlFor="preview-quantity" className="text-sm font-medium">Quantity</label>
+                  <Input id="preview-quantity" type="number" min={1} max={previewVariant.stock} value={previewQuantity} onChange={(event) => setPreviewQuantity(Math.max(1, Math.min(previewVariant.stock, Number(event.target.value) || 1)))} className="w-24" />
+                  <Button type="button" className="ml-auto" disabled={previewVariant.stock < 1} onClick={() => addItem(previewVariant, previewQuantity)}>Add variant</Button>
+                </div>
+              </div>
+            </>
+          )}
+        </DialogContent>
+      </Dialog>
     </form>
   )
 }
