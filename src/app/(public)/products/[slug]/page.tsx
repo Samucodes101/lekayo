@@ -17,30 +17,48 @@ export default async function ProductPage({ params }: { params: { slug: string }
   }
 
   const requestedSlug = generateSlug(decodedSlug)
-  const [product, activeSales] = await Promise.all([
+  const [productKey, activeSales] = await Promise.all([
     prisma.product.findFirst({
       where: {
         status: "PUBLISHED",
         OR: [{ slug: params.slug }, { slug: decodedSlug }, { slug: requestedSlug }],
       },
-      include: {
-        brand: true,
-        category: true,
-        variants: {
-          include: {
-            images: true,
-            color: true,
-          },
-        },
-        flashSaleItems: {
-          include: {
-            flashSale: { select: { active: true, startsAt: true, endsAt: true } },
-          },
-        },
-      },
+      select: { id: true, slug: true, name: true },
+    }).then(async (exactProduct) => {
+      if (exactProduct) return exactProduct
+
+      const publishedProducts = await prisma.product.findMany({
+        where: { status: "PUBLISHED" },
+        select: { id: true, slug: true, name: true },
+      })
+
+      return publishedProducts.find((candidate) =>
+        generateSlug(candidate.slug) === requestedSlug || generateSlug(candidate.name) === requestedSlug,
+      ) ?? null
     }),
     fetchActiveFlashSales(),
   ])
+
+  const product = productKey
+    ? await prisma.product.findUnique({
+        where: { id: productKey.id },
+        include: {
+          brand: true,
+          category: true,
+          variants: {
+            include: {
+              images: true,
+              color: true,
+            },
+          },
+          flashSaleItems: {
+            include: {
+              flashSale: { select: { active: true, startsAt: true, endsAt: true } },
+            },
+          },
+        },
+      })
+    : null
   if (!product) notFound()
 
   const canonicalProductSlug = generateSlug(product.slug)
