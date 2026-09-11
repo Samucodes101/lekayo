@@ -46,7 +46,7 @@ export default function CSOrdersPage() {
               {results.map((order) => (
                 <TableRow key={order.id}>
                   <TableCell><Link href={`/admin/orders/${order.id}`} className="text-blue-600 underline">{order.orderNumber}</Link></TableCell>
-                  <TableCell>{order.user.email}</TableCell>
+                  <TableCell>{order.user.email || order.user.phone || "Walk-in customer"}</TableCell>
                   <TableCell>{new Date(order.createdAt).toLocaleDateString()}</TableCell>
                   <TableCell>{formatPrice(order.total)}</TableCell>
                   <TableCell className="capitalize">{order.status}</TableCell>

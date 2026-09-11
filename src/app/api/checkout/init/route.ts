@@ -9,6 +9,11 @@ import {
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { fetchActiveFlashSales, resolveCheckoutPrice } from "@/lib/flashSale";
+import {
+  checkStockAvailability,
+  decrementStockOrThrow,
+  StockShortageError,
+} from "@/lib/stockReservation";
 
 /**
  * POST /api/checkout/init
@@ -28,20 +33,6 @@ import { fetchActiveFlashSales, resolveCheckoutPrice } from "@/lib/flashSale";
  * pass the check on the final unit.  If any item is short, the order is
  * rejected (409) before payment is ever initialized.
  */
-
-class StockShortageError extends Error {
-  constructor(
-    public shortItems: {
-      variantId: string;
-      name: string;
-      sku: string;
-      requested: number;
-      available: number;
-    }[],
-  ) {
-    super("STOCK_SHORTAGE");
-  }
-}
 
 export async function POST(req: NextRequest) {
   const session = await getServerSession(authOptions);

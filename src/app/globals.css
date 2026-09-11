@@ -57,8 +57,26 @@
     @apply bg-background text-foreground;
   }
   @media print {
-  .no-print {
-    display: none !important;
+    .no-print,
+    .cs-shell > aside,
+    .receipt-print-page > .text-center {
+      display: none !important;
+    }
+    .cs-shell > main {
+      padding: 0 !important;
+    }
+    .receipt-print-page,
+    #receipt {
+      min-height: 0 !important;
+      height: auto !important;
+      max-height: none !important;
+      margin: 0 !important;
+      padding: 0 !important;
+      box-shadow: none !important;
+    }
+    #receipt {
+      page-break-inside: avoid;
+    }
   }
 }
 
@@ -82,6 +100,5 @@
   to {
     transform: scale(1);
   }
-}
 }
 

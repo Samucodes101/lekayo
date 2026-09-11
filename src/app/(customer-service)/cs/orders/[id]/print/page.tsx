@@ -7,7 +7,7 @@ export default async function CSPrintReceiptPage({ params }: { params: { id: str
   const order = await prisma.order.findUnique({
     where: { id: params.id },
     include: {
-      user: true,
+      user: { select: { name: true, email: true, phone: true } },
       items: {
         include: {
           variant: {
@@ -21,7 +21,7 @@ export default async function CSPrintReceiptPage({ params }: { params: { id: str
   if (!order) notFound()
 
   return (
-    <div className="min-h-screen bg-gray-100 py-8">
+    <div className="receipt-print-page min-h-screen bg-gray-100 py-8">
       <Receipt order={order} />
       <div className="text-center mt-4">
         <PrintButton />

@@ -53,6 +53,12 @@ export async function POST(req: NextRequest) {
   }
 
   const email = order.user.email;
+  if (!email) {
+    return NextResponse.json(
+      { error: "An email is required to initialize online payment" },
+      { status: 400 },
+    );
+  }
   const paymentData = {
     email,
     firstName: order.shippingAddress?.firstName ?? "",

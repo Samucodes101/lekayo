@@ -38,7 +38,7 @@ export default async function CSOrderDetailPage({ params }: { params: { id: stri
           <CardHeader><CardTitle>Customer</CardTitle></CardHeader>
           <CardContent>
             <p>{order.user.name || "N/A"}</p>
-            <p>{order.user.email}</p>
+            <p>{order.user.email || order.user.phone || "Walk-in customer"}</p>
           </CardContent>
         </Card>
         <Card>

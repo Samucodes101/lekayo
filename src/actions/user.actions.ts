@@ -55,6 +55,10 @@ export async function createUser(data: {
     },
   })
 
+  if (!user.email) {
+    throw new Error("An email is required for an account with a password.")
+  }
+
   // Immediately create a PasswordResetToken so the admin can share a set-password link
   const resetToken = crypto.randomBytes(32).toString("hex")
   await prisma.passwordResetToken.create({

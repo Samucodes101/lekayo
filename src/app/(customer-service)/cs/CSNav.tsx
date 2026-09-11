@@ -9,6 +9,7 @@ const navItems = [
   { name: "Inventory Lookup", href: "/cs/inventory", icon: Box },
   { name: "Product Search", href: "/cs/products", icon: Package },
   { name: "Order Search", href: "/cs/orders", icon: ShoppingBag },
+  { name: "New Walk-in Order", href: "/cs/orders/new", icon: ShoppingBag },
   { name: "Customer Lookup", href: "/cs/customers", icon: Users },
 ]
 

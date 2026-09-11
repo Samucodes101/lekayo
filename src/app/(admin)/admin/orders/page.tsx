@@ -37,7 +37,7 @@ export default async function AdminOrdersPage() {
           {orders.map((order) => (
             <TableRow key={order.id}>
               <TableCell className="font-mono">{order.orderNumber}</TableCell>
-              <TableCell>{order.user.email}</TableCell>
+              <TableCell>{order.user.email || order.user.phone || "Walk-in customer"}</TableCell>
               <TableCell>{new Date(order.createdAt).toLocaleDateString()}</TableCell>
               <TableCell>{formatPrice(order.total)}</TableCell>
               <TableCell className="capitalize">{order.status}</TableCell>

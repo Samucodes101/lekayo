@@ -1,6 +1,6 @@
-// src/components/shared/Receipt.tsx
 import { Order } from "@prisma/client"
 import { formatPrice } from "@/lib/utils"
+import Image from "next/image"
 
 interface ReceiptProps {
   order: Order & {
@@ -14,7 +14,7 @@ interface ReceiptProps {
         sku: string
       }
     }>
-    user: { name: string | null; email: string }
+    user: { name: string | null; email: string | null; phone: string | null }
     shippingAddress: {
       addressLine1: string
       city: string
@@ -30,7 +30,7 @@ export default function Receipt({ order }: ReceiptProps) {
     <div className="max-w-2xl mx-auto p-8 bg-white print:shadow-none" id="receipt">
       {/* Header */}
       <div className="text-center border-b pb-4">
-        <h1 className="text-3xl font-serif">LEKAYO</h1>
+        <Image src="/lekayoLogo.png" alt="Lekayo" width={180} height={48} className="mx-auto h-12 w-auto object-contain" />
         <p className="text-sm text-gray-500">Luxury Fashion</p>
         <p className="text-xs text-gray-400">Receipt</p>
       </div>
@@ -51,17 +51,19 @@ export default function Receipt({ order }: ReceiptProps) {
       <div className="mt-4 border-t pt-4 grid grid-cols-2 gap-4">
         <div>
           <p className="font-medium">Customer</p>
-          <p>{order.user.name || order.user.email}</p>
-          <p>{order.user.email}</p>
+          <p>{order.user.name || order.user.email || order.user.phone || "Walk-in customer"}</p>
+          <p>{order.user.email || order.user.phone || "Walk-in customer"}</p>
         </div>
-        {order.shippingAddress && (
-          <div>
+        <div>
+          {order.shippingAddress ? (
+            <>
             <p className="font-medium">Shipping Address</p>
             <p>{order.shippingAddress.addressLine1}</p>
             <p>{order.shippingAddress.city}, {order.shippingAddress.state}</p>
             <p>{order.shippingAddress.country} - {order.shippingAddress.postalCode}</p>
-          </div>
-        )}
+            </>
+          ) : <p className="font-medium">Walk-in / In-Person Sale</p>}
+        </div>
       </div>
 
       {/* Items Table */}
