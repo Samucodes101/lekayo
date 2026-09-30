@@ -23,7 +23,7 @@ export default async function BrandPage({ params, searchParams }: { params: { sl
   const maxPrice = Number(searchParams.maxPrice)
   const where: any = {
     brandId: brand.id,
-    status: "PUBLISHED",
+    status: "PUBLISHED", variants: { some: { isActive: true } },
     ...(categoryIds.length > 0 ? { categoryId: { in: categoryIds } } : {}),
     ...((searchParams.minPrice || searchParams.maxPrice) ? {
       basePrice: {
@@ -40,7 +40,7 @@ export default async function BrandPage({ params, searchParams }: { params: { sl
         ? { name: "asc" }
         : { createdAt: "desc" }
   const [rawProducts, total, categories] = await Promise.all([
-    prisma.product.findMany({ where, orderBy, skip, take: limit, include: { variants: { include: { images: true } }, brand: true } }),
+    prisma.product.findMany({ where, orderBy, skip, take: limit, include: { variants: { where: { isActive: true }, include: { images: true } }, brand: true } }),
     prisma.product.count({ where }),
     prisma.category.findMany({ where: { products: { some: { brandId: brand.id, status: "PUBLISHED" } } }, orderBy: { name: "asc" } }),
   ])

@@ -6,8 +6,8 @@ import { enrichProductsWithFlashSales } from "@/lib/flashSale"
 
 export default async function FeaturedPage() {
   const rawProducts = await prisma.product.findMany({
-    where: { featured: true, status: "PUBLISHED" },
-    include: { variants: { include: { images: true } }, brand: true },
+    where: { featured: true, status: "PUBLISHED", variants: { some: { isActive: true } } },
+    include: { variants: { where: { isActive: true }, include: { images: true } }, brand: true },
   })
   const products = await enrichProductsWithFlashSales(rawProducts as any)
 

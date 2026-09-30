@@ -41,7 +41,7 @@ export async function POST(req: NextRequest) {
   const validVariants = await prisma.productVariant.findMany({
     where: {
       id: { in: variantIds },
-      product: { status: "PUBLISHED" },
+      product: { status: "PUBLISHED" }, isActive: true,
     },
     select: { id: true },
   })

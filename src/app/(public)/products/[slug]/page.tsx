@@ -46,6 +46,7 @@ export default async function ProductPage({ params }: { params: { slug: string }
           brand: true,
           category: true,
           variants: {
+            where: { isActive: true },
             include: {
               images: true,
               color: true,
@@ -60,6 +61,7 @@ export default async function ProductPage({ params }: { params: { slug: string }
       })
     : null
   if (!product) notFound()
+  if (product.variants.length === 0) notFound()
 
   const canonicalProductSlug = generateSlug(product.slug)
   if (canonicalProductSlug !== requestedSlug) {
@@ -70,10 +72,11 @@ export default async function ProductPage({ params }: { params: { slug: string }
   const flashResolved = resolveCheckoutPrice(product, null, activeSales)
 
   const related = await prisma.product.findMany({
-    where: { categoryId: product.categoryId, id: { not: product.id }, status: "PUBLISHED" },
+    where: { categoryId: product.categoryId, id: { not: product.id }, status: "PUBLISHED", variants: { some: { isActive: true } } },
     take: 4,
     include: {
       variants: {
+        where: { isActive: true },
         include: {
           images: true,
           color: true,

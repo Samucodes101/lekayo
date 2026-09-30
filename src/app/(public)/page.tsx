@@ -22,15 +22,15 @@ export default async function HomePage() {
   // Fetch data
   const hero = await prisma.heroBanner.findFirst({ where: { active: true }, orderBy: { order: "asc" } })
   const rawFeatured = await prisma.product.findMany({
-    where: { featured: true, status: "PUBLISHED" },
+    where: { featured: true, status: "PUBLISHED", variants: { some: { isActive: true } } },
     take: 8,
-    include: { variants: { include: { images: true, color: true } }, brand: true, category: true },
+    include: { variants: { where: { isActive: true }, include: { images: true, color: true } }, brand: true, category: true },
   })
   const rawNewArrivals = await prisma.product.findMany({
-    where: { status: "PUBLISHED" },
+    where: { status: "PUBLISHED", variants: { some: { isActive: true } } },
     orderBy: { createdAt: "desc" },
     take: 8,
-    include: { variants: { include: { images: true, color: true } }, brand: true, category: true },
+    include: { variants: { where: { isActive: true }, include: { images: true, color: true } }, brand: true, category: true },
   })
 
   // Enrich with flash sale prices
@@ -42,7 +42,7 @@ export default async function HomePage() {
 
   const activeCampaign = await prisma.seasonalCampaign.findFirst({
     where: { active: true, startsAt: { lte: new Date() }, endsAt: { gte: new Date() } },
-    include: { featuredProducts: { include: { product: { include: { variants: { include: { images: true, color: true } }, brand: true, category: true } } } } },
+    include: { featuredProducts: { include: { product: { include: { variants: { where: { isActive: true }, include: { images: true, color: true } }, brand: true, category: true } } } } },
   })
 
   // Enrich campaign products with flash sales
@@ -58,7 +58,7 @@ export default async function HomePage() {
 
   const activeCollections = await prisma.styleCollection.findMany({
     where: { active: true },
-    include: { products: { include: { product: { include: { variants: { include: { images: true, color: true } }, brand: true, category: true } } } } },
+    include: { products: { include: { product: { include: { variants: { where: { isActive: true }, include: { images: true, color: true } }, brand: true, category: true } } } } },
   })
 
   // Enrich collection products with flash sales

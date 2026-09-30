@@ -171,7 +171,7 @@ async function handleCheckoutInit(req: NextRequest) {
 
   const [variants, products] = await Promise.all([
     prisma.productVariant.findMany({
-      where: { id: { in: variantIds } },
+      where: { id: { in: variantIds }, isActive: true },
       select: { id: true, price: true, productId: true, stock: true, sku: true },
     }),
     prisma.product.findMany({

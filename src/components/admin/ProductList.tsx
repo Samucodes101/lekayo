@@ -18,8 +18,8 @@ export default function ProductList({ products }: { products: any[] }) {
     setDeletingId(id)
 
     try {
-      await deleteProduct(id)
-      toast({ title: "Product deleted" })
+      const result = await deleteProduct(id)
+      toast({ title: result?.archived ? "Product archived" : "Product deleted" })
       router.refresh()
     } catch (error: any) {
       toast({ title: "Unable to delete product", description: error?.message || "Please remove dependent records first.", variant: "destructive" })

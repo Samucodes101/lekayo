@@ -21,7 +21,7 @@ export default async function ShopPage({ searchParams }: { searchParams: SearchP
   const limit = 24
   const skip = (page - 1) * limit
 
-  const where: any = { status: "PUBLISHED" }
+  const where: any = { status: "PUBLISHED", variants: { some: { isActive: true } } }
   if (searchParams.brand) {
     const brandIds = searchParams.brand.split(",")
     where.brandId = { in: brandIds }
@@ -47,7 +47,7 @@ export default async function ShopPage({ searchParams }: { searchParams: SearchP
   const [rawProducts, total, brands, categories] = await Promise.all([
     prisma.product.findMany({
       where,
-      include: { variants: { include: { images: true } }, brand: true },
+      include: { variants: { where: { isActive: true }, include: { images: true } }, brand: true },
       orderBy,
       skip,
       take: limit,

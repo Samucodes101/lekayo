@@ -113,28 +113,6 @@ export async function updateProduct(id: string, data: any) {
     // Variants that exist in DB but are NOT in the submitted list (admin removed them)
     const removedIds = existingIds.filter((eid) => !submittedIds.includes(eid))
 
-    // --- EARLY VALIDATION: Check removed variants for order history ---
-    if (removedIds.length > 0) {
-      const orderCounts = await tx.orderItem.groupBy({
-        by: ["variantId"],
-        where: { variantId: { in: removedIds } },
-        _count: { id: true },
-      })
-
-      if (orderCounts.length > 0) {
-        const blockedSkus = existingVariants
-          .filter((v) => orderCounts.some((oc) => oc.variantId === v.id))
-          .map((v) => v.sku)
-
-        throw new Error(
-          `Cannot remove variant${blockedSkus.length > 1 ? "s" : ""} "${blockedSkus.join(", ")}" — ` +
-          `${blockedSkus.length > 1 ? "they have" : "it has"} order history. ` +
-          `To hide ${blockedSkus.length > 1 ? "them" : "it"} from customers, set stock to 0 ` +
-          `instead of removing ${blockedSkus.length > 1 ? "them" : "it"}.`,
-        )
-      }
-    }
-
     // --- RECONCILE: Update existing variants, create new ones ---
     if (variants && variants.length > 0) {
       for (const v of variants) {
@@ -236,15 +214,30 @@ export async function updateProduct(id: string, data: any) {
       }
     }
 
-    // --- REMOVE variants that passed the order-history check (removedIds with no orders) ---
+    // --- REMOVE variants: hard-delete only when there is no order/inventory history,
+    // otherwise archive (isActive = false) to preserve the audit trail. ---
     for (const removedId of removedIds) {
-      // Clean up cart items referencing this variant before deleting
-      await tx.cartItem.deleteMany({ where: { variantId: removedId } })
+      const [orderItemCount, inventoryLogCount] = await Promise.all([
+        tx.orderItem.count({ where: { variantId: removedId } }),
+        tx.inventoryLog.count({ where: { variantId: removedId } }),
+      ])
 
-      // TODO(cloudinary-cleanup): Deleting the variant cascades to VariantImage rows,
-      // but the Cloudinary assets (by publicId) are NOT deleted. A future task should
-      // handle cleaning up these orphaned Cloudinary files.
-      await tx.productVariant.delete({ where: { id: removedId } })
+      if (orderItemCount > 0 || inventoryLogCount > 0) {
+        // Preserve order/inventory history: archive instead of hard-deleting.
+        await tx.productVariant.update({
+          where: { id: removedId },
+          data: { isActive: false },
+        })
+      } else {
+        // No history - safe to hard delete.
+        // Clean up cart items referencing this variant before deleting.
+        await tx.cartItem.deleteMany({ where: { variantId: removedId } })
+
+        // TODO(cloudinary-cleanup): Deleting the variant cascades to VariantImage rows,
+        // but the Cloudinary assets (by publicId) are NOT deleted. A future task should
+        // handle cleaning up these orphaned Cloudinary files.
+        await tx.productVariant.delete({ where: { id: removedId } })
+      }
     }
   })
 
@@ -260,35 +253,41 @@ export async function deleteProduct(id: string) {
     throw new Error("Unauthorized")
   }
 
-  // Check if any variant of this product is referenced by an OrderItem.
-  // The OrderItem → ProductVariant foreign key defaults to RESTRICT, so we
-  // cannot delete a product whose variants appear on an order.
-  const variantIds = await prisma.productVariant.findMany({
+  const variants = await prisma.productVariant.findMany({
     where: { productId: id },
     select: { id: true },
   })
+  const variantIds = variants.map((v) => v.id)
 
-  if (variantIds.length > 0) {
-    const orderItemCount = await prisma.orderItem.count({
-      where: { variantId: { in: variantIds.map((v) => v.id) } },
-    })
+  // OrderItem -> ProductVariant and InventoryLog -> ProductVariant are both RESTRICT.
+  // If any variant has order or inventory history, we cannot cascade-delete it,
+  // so archive the product and all of its variants instead of hard-deleting.
+  const [orderItemCount, inventoryLogCount] = await Promise.all([
+    variantIds.length > 0
+      ? prisma.orderItem.count({ where: { variantId: { in: variantIds } } })
+      : Promise.resolve(0),
+    variantIds.length > 0
+      ? prisma.inventoryLog.count({ where: { variantId: { in: variantIds } } })
+      : Promise.resolve(0),
+  ])
 
-    if (orderItemCount > 0) {
-      throw new Error(
-        "Cannot delete a product that has been ordered. Mark it as inactive or change its status to ARCHIVED instead.",
-      )
-    }
+  if (orderItemCount > 0 || inventoryLogCount > 0) {
+    await prisma.$transaction([
+      prisma.product.update({ where: { id }, data: { status: "ARCHIVED" } }),
+      prisma.productVariant.updateMany({ where: { productId: id }, data: { isActive: false } }),
+    ])
+    revalidatePath("/admin/products")
+    return { archived: true }
   }
 
-  // Clean up cart items and wishlist items that reference this product's
-  // variants before deleting (these relations use CASCADE, but being
-  // explicit avoids any edge-case issues).
+  // No history - safe to hard delete (Product -> ProductVariant cascades).
+  // Clean up cart items and wishlist items explicitly before deleting.
   if (variantIds.length > 0) {
-    const ids = variantIds.map((v) => v.id)
-    await prisma.cartItem.deleteMany({ where: { variantId: { in: ids } } })
+    await prisma.cartItem.deleteMany({ where: { variantId: { in: variantIds } } })
   }
 
   await prisma.wishlistItem.deleteMany({ where: { productId: id } })
   await prisma.product.delete({ where: { id } })
   revalidatePath("/admin/products")
+  return { deleted: true }
 }

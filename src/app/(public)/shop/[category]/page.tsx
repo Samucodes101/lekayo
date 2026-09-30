@@ -29,7 +29,7 @@ export default async function CategoryPage({
   const maxPrice = Number(searchParams.maxPrice)
   const where: any = {
     categoryId: category.id,
-    status: "PUBLISHED",
+    status: "PUBLISHED", variants: { some: { isActive: true } },
     ...(brandIds.length > 0 ? { brandId: { in: brandIds } } : {}),
     ...((searchParams.minPrice || searchParams.maxPrice) ? {
       basePrice: {
@@ -48,7 +48,7 @@ export default async function CategoryPage({
 
   const rawProducts = await prisma.product.findMany({
     where,
-    include: { variants: { include: { images: true } }, brand: true },
+    include: { variants: { where: { isActive: true }, include: { images: true } }, brand: true },
     orderBy,
     skip,
     take: limit,
