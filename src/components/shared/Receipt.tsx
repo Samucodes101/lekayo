@@ -14,7 +14,7 @@ interface ReceiptProps {
         sku: string
       }
     }>
-    user: { name: string | null; email: string | null; phone: string | null }
+    user: { name: string | null; email: string | null; phone: string | null } | null
     shippingAddress: {
       addressLine1: string
       city: string
@@ -51,8 +51,8 @@ export default function Receipt({ order }: ReceiptProps) {
       <div className="mt-4 border-t pt-4 grid grid-cols-2 gap-4">
         <div>
           <p className="font-medium">Customer</p>
-          <p>{order.user.name || order.user.email || order.user.phone || "Walk-in customer"}</p>
-          <p>{order.user.email || order.user.phone || "Walk-in customer"}</p>
+          <p>{order.user?.name || order.customerName || order.user?.email || order.email || "Walk-in customer"}</p>
+          <p>{order.user?.email || order.email || order.user?.phone || order.customerPhone || "Walk-in customer"}</p>
         </div>
         <div>
           {order.shippingAddress ? (

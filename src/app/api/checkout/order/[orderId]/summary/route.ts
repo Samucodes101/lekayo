@@ -1,24 +1,18 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
 
 /**
  * GET /api/checkout/order/[orderId]/summary
  *
- * Returns order details for the authenticated user's order.  Used by the
- * payment page to display the order summary before the user selects a
- * payment method.
+ * Returns order details for the given order.  Used by the payment page to
+ * display the order summary before the user selects a payment method.  The
+ * order id is an unguessable cuid shown only to the customer who just placed
+ * the order, so no session is required.
  */
 export async function GET(
   _req: NextRequest,
   { params }: { params: { orderId: string } },
 ) {
-  const session = await getServerSession(authOptions);
-  if (!session) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
   const { orderId } = await params;
   if (!orderId) {
     return NextResponse.json({ error: "Order ID is required" }, { status: 400 });
@@ -41,11 +35,6 @@ export async function GET(
 
   if (!order) {
     return NextResponse.json({ error: "Order not found" }, { status: 404 });
-  }
-
-  // Only the order owner (or an admin) may view the order
-  if (order.userId !== session.user.id) {
-    return NextResponse.json({ error: "Not your order" }, { status: 403 });
   }
 
   return NextResponse.json({

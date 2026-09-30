@@ -14,7 +14,7 @@ export default async function AdminOrdersPage() {
         <h1 className="text-2xl font-serif">Orders</h1>
       </div>
 
-      <SearchableOrders orders={orders.map((order) => ({ id: order.id, orderNumber: order.orderNumber, email: order.user.email, phone: order.user.phone, createdAt: order.createdAt.toISOString(), total: order.total, status: order.status }))} />
+      <SearchableOrders orders={orders.map((order) => ({ id: order.id, orderNumber: order.orderNumber, email: order.user?.email ?? order.email, phone: order.user?.phone ?? order.customerPhone, createdAt: order.createdAt.toISOString(), total: order.total, status: order.status }))} />
     </div>
   )
 }

@@ -36,9 +36,6 @@ import {
 
 async function handleCheckoutInit(req: NextRequest) {
   const session = await getServerSession(authOptions);
-  if (!session) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
 
   const {
     email,
@@ -81,12 +78,11 @@ async function handleCheckoutInit(req: NextRequest) {
     );
   }
 
-  const user = await prisma.user.findUnique({
-    where: { email: session.user.email! },
-  });
-  if (!user) {
-    return NextResponse.json({ error: "User not found" }, { status: 404 });
-  }
+  // Link the order to the signed-in user when available. Guests check out
+  // without an account; their contact details are stored on the order itself.
+  const user = session?.user?.email
+    ? await prisma.user.findUnique({ where: { email: session.user.email } })
+    : null;
 
   // ---- Resolve delivery location & shipping cost ----
   let resolvedLocationId = deliveryLocation;
@@ -329,7 +325,7 @@ async function handleCheckoutInit(req: NextRequest) {
               postalCode,
               phone,
               country: "Nigeria",
-              userId: user.id,
+              userId: user?.id ?? null,
             },
           });
 
@@ -343,7 +339,10 @@ async function handleCheckoutInit(req: NextRequest) {
           deliveryLocation: resolvedLocationId,
           discount: Math.round(totalDiscount * 100) / 100,
           total: serverTotal,
-          userId: user.id,
+          email,
+          customerName: `${firstName} ${lastName}`.trim(),
+          customerPhone: phone,
+          userId: user?.id ?? null,
           shippingAddressId: shippingAddress?.id ?? undefined,
           items: {
             create: orderItems,

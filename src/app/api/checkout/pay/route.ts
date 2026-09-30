@@ -2,8 +2,6 @@
 import { prisma } from "@/lib/db";
 import { initializePayment } from "@/lib/paystack";
 import { initializeFlutterwavePayment } from "@/lib/flutterwave";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
 
 /**
  * POST /api/checkout/pay
@@ -15,11 +13,6 @@ import { authOptions } from "@/lib/auth";
  * Returns: { authorizationUrl: string, reference: string }
  */
 export async function POST(req: NextRequest) {
-  const session = await getServerSession(authOptions);
-  if (!session) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
   const { orderId, paymentGateway } = await req.json();
 
   if (!orderId) {
@@ -39,11 +32,6 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Order not found" }, { status: 404 });
   }
 
-  // Ensure the order belongs to the authenticated user
-  if (order.user.email !== session.user.email) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
-  }
-
   // Don't re-initialize payment for orders that are already paid
   if (order.status === "PAID") {
     return NextResponse.json(
@@ -52,7 +40,7 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  const email = order.user.email;
+  const email = order.email ?? order.user?.email ?? null;
   if (!email) {
     return NextResponse.json(
       { error: "An email is required to initialize online payment" },

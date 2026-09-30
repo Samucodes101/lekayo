@@ -278,11 +278,15 @@ model Order {
   deliveredAt     DateTime?
   notes           String?     @db.Text
 
+  email           String?
+  customerName    String?
+  customerPhone   String?
+
   createdAt       DateTime    @default(now())
   updatedAt       DateTime    @updatedAt
 
-  userId          String
-  user            User        @relation(fields: [userId], references: [id])
+  userId          String?
+  user            User?       @relation(fields: [userId], references: [id], onDelete: Restrict)
   shippingAddressId String?
   shippingAddress Address?    @relation("shippingAddress", fields: [shippingAddressId], references: [id])
   billingAddressId String?
@@ -317,8 +321,8 @@ model Address {
   phone        String
   isDefault    Boolean  @default(false)
 
-  userId       String
-  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId       String?
+  user         User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   ordersAsShipping Order[] @relation("shippingAddress")
   ordersAsBilling  Order[] @relation("billingAddress")

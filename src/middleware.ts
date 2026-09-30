@@ -11,6 +11,7 @@ const publicPagePaths = [
   "/brands",
   "/search",
   "/cart",
+  "/checkout",
   "/wholesale",
   "/about",
   "/contact",
@@ -38,6 +39,9 @@ const guestApi: { prefix: string; methods: string[] }[] = [
   { prefix: "/api/newsletter", methods: ["POST"] },
   { prefix: "/api/wholesale/apply", methods: ["POST"] },
   { prefix: "/api/orders/track", methods: ["GET", "POST"] },
+  { prefix: "/api/checkout/init", methods: ["POST"] },
+  { prefix: "/api/checkout/pay", methods: ["POST"] },
+  { prefix: "/api/checkout/order", methods: ["GET"] },
 ]
 
 // API routes with no auth check of their own: enforce staff role here

@@ -26,7 +26,7 @@ export default function CheckoutSuccessPage() {
     <div className="container mx-auto px-4 py-16 text-center">
       <h1 className="text-3xl font-serif mb-4">Order Successful!</h1>
       <p className="mb-6">Thank you for your purchase. Your order has been received.</p>
-      <Button asChild><Link href="/account/orders">View My Orders</Link></Button>
+      <Button asChild><Link href="/orders/track">Track your order</Link></Button>
     </div>
   )
 }

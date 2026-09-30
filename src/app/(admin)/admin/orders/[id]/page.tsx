@@ -56,8 +56,8 @@ export default async function AdminOrderDetailPage({ params }: { params: { id: s
         <Card>
           <CardHeader><CardTitle>Customer</CardTitle></CardHeader>
           <CardContent>
-            <p>{order.user.name || "N/A"}</p>
-            <p>{order.user.email || order.user.phone || "Walk-in customer"}</p>
+            <p>{order.user?.name || order.customerName || "N/A"}</p>
+            <p>{order.user?.email || order.email || order.user?.phone || order.customerPhone || "Walk-in customer"}</p>
           </CardContent>
         </Card>
         <Card>
