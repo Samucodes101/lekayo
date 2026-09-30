@@ -18,6 +18,7 @@ interface AddToCartButtonProps {
   stock?: number
   color?: { name: string; hex: string }
   size?: string
+  onAdded?: () => void
 }
 
 export default function AddToCartButton({
@@ -32,6 +33,7 @@ export default function AddToCartButton({
   stock,
   color,
   size,
+  onAdded,
 }: AddToCartButtonProps) {
   const { addItem } = useActiveCart()
   const [loading, setLoading] = useState(false)
@@ -43,7 +45,7 @@ export default function AddToCartButton({
 
     setLoading(true)
     try {
-      addItem({
+      await addItem({
         variantId,
         productId,
         name: productName,
@@ -56,7 +58,11 @@ export default function AddToCartButton({
         color,
         size,
       })
-      toast({ title: "Added to cart", description: `${productName} added to your cart.` })
+      if (onAdded) {
+        onAdded()
+      } else {
+        toast({ title: "Added to cart", description: `${productName} added to your cart.` })
+      }
     } catch (error) {
       toast({ title: "Error", description: "Could not add item to cart.", variant: "destructive" })
     } finally {
