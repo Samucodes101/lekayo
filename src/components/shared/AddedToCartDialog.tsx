@@ -1,7 +1,7 @@
 "use client"
 
-import Link from "next/link"
 import Image from "next/image"
+import { useRouter } from "next/navigation"
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { formatPrice } from "@/lib/utils"
@@ -10,9 +10,13 @@ import { Check } from "lucide-react"
 
 export function AddedToCartContent({
   item,
+  onViewCart,
+  onCheckout,
   onContinueShopping,
 }: {
   item: AddedItemSummary | null
+  onViewCart: () => void
+  onCheckout: () => void
   onContinueShopping: () => void
 }) {
   if (!item) return null
@@ -59,11 +63,11 @@ export function AddedToCartContent({
       </div>
 
       <div className="mt-5 flex w-full flex-col gap-2">
-        <Button asChild className="w-full">
-          <Link href="/cart">View Cart</Link>
+        <Button onClick={onViewCart} className="w-full">
+          View Cart
         </Button>
-        <Button asChild variant="outline" className="w-full">
-          <Link href="/checkout">Checkout</Link>
+        <Button onClick={onCheckout} variant="outline" className="w-full">
+          Checkout
         </Button>
         <button
           type="button"
@@ -88,11 +92,24 @@ export default function AddedToCartDialog({
   item: AddedItemSummary | null
   onContinueShopping: () => void
 }) {
+  const router = useRouter()
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="left-0 right-0 bottom-0 top-auto max-w-none translate-x-0 translate-y-0 rounded-t-2xl p-6 sm:left-[50%] sm:right-auto sm:top-[50%] sm:bottom-auto sm:max-w-sm sm:translate-x-[-50%] sm:translate-y-[-50%] sm:rounded-lg">
         <DialogTitle className="sr-only">Added to Cart</DialogTitle>
-        <AddedToCartContent item={item} onContinueShopping={onContinueShopping} />
+        <AddedToCartContent
+          item={item}
+          onViewCart={() => {
+            onOpenChange(false)
+            router.push("/cart")
+          }}
+          onCheckout={() => {
+            onOpenChange(false)
+            router.push("/checkout")
+          }}
+          onContinueShopping={onContinueShopping}
+        />
       </DialogContent>
     </Dialog>
   )

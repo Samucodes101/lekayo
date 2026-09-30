@@ -53,10 +53,11 @@ export default function ProductDetailView({ product, onAdded, stickyCta = false 
 
   const resolvedFlash = (product as any)._flashSaleResolved
   const flashAdjusted = { ...product, flashSaleItems: (product as any).flashSaleItems, flashSaleItem: (product as any).flashSaleItem }
-  const price = resolvedFlash?.finalPrice ?? getEffectivePrice(flashAdjusted)
   const isOnFlashSale = resolvedFlash ? resolvedFlash.discountSaved > 0 : hasFlashSaleDiscount(flashAdjusted)
   const variantPrice = selectedVariant?.price
-  const originalPrice = resolvedFlash?.originalPrice ?? variantPrice ?? product.salePrice ?? product.basePrice
+  const price = resolvedFlash?.finalPrice ?? variantPrice ?? getEffectivePrice(flashAdjusted)
+  const originalPrice = resolvedFlash?.originalPrice ?? product.basePrice
+  const showDiscount = price < originalPrice
 
   const sortedImages = [...(selectedVariant?.images || [])].sort((a: any, b: any) => (a.order ?? 0) - (b.order ?? 0))
   const mainImage = sortedImages[activeImageIndex]?.url || sortedImages[0]?.url || "/placeholder.png"
@@ -67,7 +68,7 @@ export default function ProductDetailView({ product, onAdded, stickyCta = false 
       name: product.name,
       image: mainImage,
       price,
-      originalPrice: isOnFlashSale ? originalPrice : undefined,
+      originalPrice: showDiscount ? originalPrice : undefined,
       quantity,
       color: selectedVariant?.color ? { name: selectedVariant.color.name } : undefined,
       size: selectedVariant?.sizeValue,
@@ -84,7 +85,7 @@ export default function ProductDetailView({ product, onAdded, stickyCta = false 
         quantity={quantity}
         productName={product.name}
         price={price}
-        originalPrice={isOnFlashSale ? originalPrice : undefined}
+        originalPrice={showDiscount ? originalPrice : undefined}
         image={mainImage}
         sku={selectedVariant?.sku || product.sku}
         productId={product.id}
@@ -99,7 +100,7 @@ export default function ProductDetailView({ product, onAdded, stickyCta = false 
   return (
     <div className={stickyCta ? "flex min-h-0 flex-1 flex-col" : ""}>
       <div className={stickyCta ? "min-h-0 flex-1 overflow-y-auto" : ""}>
-        <div className="grid gap-8 lg:grid-cols-2 lg:gap-10">
+        <div className="grid gap-8 md:grid-cols-2 md:gap-10">
           <div className="space-y-4">
             <div
               className="relative aspect-square touch-pan-x overflow-hidden rounded-lg bg-gray-100"
@@ -121,7 +122,7 @@ export default function ProductDetailView({ product, onAdded, stickyCta = false 
                 alt={product.name}
                 fill
                 priority
-                sizes="(min-width: 1024px) 560px, 100vw"
+                sizes="(min-width: 768px) 50vw, 100vw"
                 className="object-cover"
                 onError={(e) => {
                   e.currentTarget.src = "/placeholder.png"
@@ -156,20 +157,20 @@ export default function ProductDetailView({ product, onAdded, stickyCta = false 
           </div>
 
           <div>
-            <h1 className="text-2xl font-serif lg:text-3xl">{product.name}</h1>
+            <h1 className="text-2xl font-serif md:text-3xl">{product.name}</h1>
             <p className="mt-1 text-gray-500">{product.brand?.name || "Unknown Brand"}</p>
             <div className="mt-4 flex flex-wrap items-baseline gap-2">
               <span className="text-2xl font-bold">{formatPrice(price)}</span>
-              {isOnFlashSale && price < originalPrice ? (
+              {showDiscount && (
                 <>
                   <span className="text-gray-400 line-through">{formatPrice(originalPrice)}</span>
-                  <span className="text-sm font-medium text-red-500">
-                    {Math.round((1 - price / originalPrice) * 100)}% OFF
-                  </span>
+                  {isOnFlashSale && (
+                    <span className="text-sm font-medium text-red-500">
+                      {Math.round((1 - price / originalPrice) * 100)}% OFF
+                    </span>
+                  )}
                 </>
-              ) : product.salePrice && product.salePrice < product.basePrice ? (
-                <span className="text-gray-400 line-through">{formatPrice(product.basePrice)}</span>
-              ) : null}
+              )}
             </div>
             <div className="mt-5">
               <VariantSelector
@@ -181,7 +182,7 @@ export default function ProductDetailView({ product, onAdded, stickyCta = false 
               />
             </div>
 
-            <div className={stickyCta ? "mt-6 hidden lg:block" : "mt-6"}>
+            <div className={stickyCta ? "mt-6 hidden md:block" : "mt-6"}>
               {cta}
               <div className="mt-3">
                 <WishlistButton productId={product.id} />
@@ -209,7 +210,7 @@ export default function ProductDetailView({ product, onAdded, stickyCta = false 
       </div>
 
       {stickyCta && (
-        <div className="border-t bg-background px-4 py-3 lg:hidden">
+        <div className="border-t bg-background px-4 py-3 md:hidden">
           {cta}
           <div className="mt-3 flex justify-end">
             <WishlistButton productId={product.id} size="icon" />
