@@ -21,10 +21,9 @@ export interface AddedItemSummary {
 interface ProductDetailViewProps {
   product: any
   onAdded?: (summary: AddedItemSummary) => void
-  stickyCta?: boolean
 }
 
-export default function ProductDetailView({ product, onAdded, stickyCta = false }: ProductDetailViewProps) {
+export default function ProductDetailView({ product, onAdded }: ProductDetailViewProps) {
   const [selectedColorId, setSelectedColorId] = useState<string | undefined>(
     product.variants.find((v: any) => v.colorId)?.colorId || undefined,
   )
@@ -98,8 +97,8 @@ export default function ProductDetailView({ product, onAdded, stickyCta = false 
   )
 
   return (
-    <div className={stickyCta ? "flex min-h-0 flex-1 flex-col" : ""}>
-      <div className={stickyCta ? "min-h-0 flex-1 overflow-y-auto" : ""}>
+    <div>
+      <div>
         <div className="grid gap-8 md:grid-cols-2 md:gap-10">
           <div className="space-y-4">
             <div
@@ -182,7 +181,7 @@ export default function ProductDetailView({ product, onAdded, stickyCta = false 
               />
             </div>
 
-            <div className={stickyCta ? "mt-6 hidden md:block" : "mt-6"}>
+            <div className="mt-6">
               {cta}
               <div className="mt-3">
                 <WishlistButton productId={product.id} />
@@ -209,14 +208,6 @@ export default function ProductDetailView({ product, onAdded, stickyCta = false 
         </div>
       </div>
 
-      {stickyCta && (
-        <div className="border-t bg-background px-4 py-3 md:hidden">
-          {cta}
-          <div className="mt-3 flex justify-end">
-            <WishlistButton productId={product.id} size="icon" />
-          </div>
-        </div>
-      )}
     </div>
   )
 }
