@@ -34,7 +34,7 @@ import {
  * rejected (409) before payment is ever initialized.
  */
 
-export async function POST(req: NextRequest) {
+async function handleCheckoutInit(req: NextRequest) {
   const session = await getServerSession(authOptions);
   if (!session) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -358,6 +358,7 @@ export async function POST(req: NextRequest) {
         { status: 409 },
       );
     }
+    console.error("checkout/init failed:", error);
     throw error;
   }
 
@@ -368,4 +369,29 @@ export async function POST(req: NextRequest) {
     discount: order.discount,
     total: order.total,
   });
+}
+
+/**
+ * Top-level wrapper: nothing thrown anywhere in the handler (body parsing,
+ * session, DB lookups, price resolution, transaction) can escape unlogged.
+ * The requestId is returned to the client so a failure report can be matched
+ * to its log entry.
+ */
+export async function POST(req: NextRequest) {
+  const requestId = crypto.randomUUID();
+  try {
+    return await handleCheckoutInit(req);
+  } catch (error) {
+    console.error(`[checkout/init] ${requestId} unhandled error:`, {
+      message: error instanceof Error ? error.message : String(error),
+      stack: error instanceof Error ? error.stack : undefined,
+      // Prisma errors carry a code (e.g. P2002, P2034) and meta
+      code: (error as any)?.code,
+      meta: (error as any)?.meta,
+    });
+    return NextResponse.json(
+      { error: "Internal server error", requestId },
+      { status: 500 },
+    );
+  }
 }
