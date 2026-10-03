@@ -140,7 +140,7 @@ export default function CheckoutForm({
           const list = error.shortItems
             .map(
               (s: any) =>
-                `${s.name} (${s.sku}) — requested ${s.requested}, only ${s.available} left`,
+                `${s.name} — requested ${s.requested}, only ${s.available} left`,
             )
             .join("\n");
           throw new Error(

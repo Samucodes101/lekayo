@@ -1,50 +1,67 @@
-"use client"
-
-import { useState } from "react"
-import { Input } from "@/components/ui/input"
-import { Button } from "@/components/ui/button"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { formatPrice } from "@/lib/utils"
 import Link from "next/link"
-import { useLiveSearch } from "@/hooks/useLiveSearch"
+import { Button } from "@/components/ui/button"
+import ProductList from "@/components/admin/ProductList"
+import { ProductFilters } from "@/components/admin/ProductFilters"
+import { queryProducts, PRODUCTS_PAGE_SIZE } from "@/lib/productAdminQueries"
 
-export default function CSProductsPage() {
-  const [search, setSearch] = useState("")
-  const { results, loading } = useLiveSearch<any>(search, "/api/products/search")
+type SP = Record<string, string | string[] | undefined>
+
+export default async function CSProductsPage({
+  searchParams,
+}: {
+  searchParams: Promise<SP> | SP
+}) {
+  const sp = await searchParams
+  const { stats, brands, categories, rows, page, totalPages, filteredCount, pageHref } =
+    await queryProducts(sp)
 
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-serif">Product Search</h1>
-      <Input placeholder="Search by name, SKU, brand, or category" value={search} onChange={(e) => setSearch(e.target.value)} className="max-w-md" />
-      {loading && <p className="text-sm text-gray-500">Searching...</p>}
-      <Card>
-        <CardHeader><CardTitle>Results</CardTitle></CardHeader>
-        <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Name</TableHead>
-                <TableHead>SKU</TableHead>
-                <TableHead>Brand</TableHead>
-                <TableHead>Price</TableHead>
-                <TableHead>Stock</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {results.map((p) => (
-                <TableRow key={p.id}>
-                  <TableCell><Link href={`/products/${p.slug}`} className="text-blue-600 underline">{p.name}</Link></TableCell>
-                  <TableCell>{p.sku}</TableCell>
-                  <TableCell>{p.brand?.name}</TableCell>
-                  <TableCell>{formatPrice(p.salePrice || p.basePrice)}</TableCell>
-                  <TableCell>{[...(p.variants || [])].sort((a: any, b: any) => (a.order ?? 0) - (b.order ?? 0))[0]?.stock || 0}</TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
+      <h1 className="text-2xl font-serif">Products</h1>
+
+      <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
+        {stats.map((s) => (
+          <div key={s.label} className="rounded-lg border p-4">
+            <p className="text-xs text-muted-foreground">{s.label}</p>
+            <p className="text-2xl font-semibold">{s.value.toLocaleString("en-NG")}</p>
+          </div>
+        ))}
+      </div>
+
+      <ProductFilters brands={brands} categories={categories} />
+
+      <ProductList rows={rows} readOnly />
+
+      <div className="flex items-center justify-between text-sm">
+        <p className="text-muted-foreground">
+          {filteredCount === 0
+            ? "No products match these filters"
+            : `Showing ${(page - 1) * PRODUCTS_PAGE_SIZE + 1}–${Math.min(page * PRODUCTS_PAGE_SIZE, filteredCount)} of ${filteredCount.toLocaleString("en-NG")}`}
+        </p>
+        <div className="flex items-center gap-2">
+          <Button asChild variant="outline" size="sm" disabled={page <= 1}>
+            <Link
+              href={pageHref(page - 1)}
+              aria-disabled={page <= 1}
+              className={page <= 1 ? "pointer-events-none opacity-50" : ""}
+            >
+              Previous
+            </Link>
+          </Button>
+          <span className="px-2">
+            Page {page} of {totalPages}
+          </span>
+          <Button asChild variant="outline" size="sm" disabled={page >= totalPages}>
+            <Link
+              href={pageHref(page + 1)}
+              aria-disabled={page >= totalPages}
+              className={page >= totalPages ? "pointer-events-none opacity-50" : ""}
+            >
+              Next
+            </Link>
+          </Button>
+        </div>
+      </div>
     </div>
   )
 }

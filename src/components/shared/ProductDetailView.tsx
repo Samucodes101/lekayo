@@ -200,9 +200,6 @@ export default function ProductDetailView({ product, onAdded }: ProductDetailVie
                   <strong>Materials:</strong> {product.materials}
                 </p>
               )}
-              <p>
-                <strong>SKU:</strong> {product.sku}
-              </p>
             </div>
           </div>
         </div>

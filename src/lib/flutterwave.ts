@@ -58,7 +58,7 @@ export async function initializeFlutterwavePayment(
 
     return {
       authorization_url: link,
-      reference: json?.data?.flw_ref || txRef,
+      reference: txRef,
     };
   } catch (error) {
     console.error("Flutterwave init error:", error);

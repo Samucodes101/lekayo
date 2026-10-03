@@ -22,9 +22,13 @@ export default function CartItem({ item }: CartItemProps) {
       </div>
       <div className="flex-1">
         <h4 className="font-medium">{item.name}</h4>
-        <p className="text-sm text-gray-500">
-          {item.color && `${item.color.name}, `}{item.size && `${item.size}, `}SKU: {item.sku}
-        </p>
+        {(item.color || item.size) && (
+          <p className="text-sm text-gray-500">
+            {item.color && item.color.name}
+            {item.color && item.size && ", "}
+            {item.size && item.size}
+          </p>
+        )}
         <div className="flex items-center justify-between mt-2">
           <QuantitySelector
             quantity={item.quantity}

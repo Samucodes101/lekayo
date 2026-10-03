@@ -1,18 +1,72 @@
-import { prisma } from "@/lib/db"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import ProductList from "@/components/admin/ProductList"
+import { ProductFilters } from "@/components/admin/ProductFilters"
+import { queryProducts, PRODUCTS_PAGE_SIZE } from "@/lib/productAdminQueries"
 
-export default async function AdminProductsPage() {
-  const products = await prisma.product.findMany({ include: { brand: true, category: true }, orderBy: { createdAt: "desc" } })
+type SP = Record<string, string | string[] | undefined>
+
+export default async function AdminProductsPage({
+  searchParams,
+}: {
+  searchParams: Promise<SP> | SP
+}) {
+  const sp = await searchParams
+  const { stats, brands, categories, rows, page, totalPages, filteredCount, pageHref } =
+    await queryProducts(sp)
 
   return (
-    <div>
-      <div className="flex justify-between items-center mb-6">
+    <div className="space-y-6">
+      <div className="flex justify-between items-center">
         <h1 className="text-2xl font-serif">Products</h1>
-        <Button asChild><Link href="/admin/products/new">Add Product</Link></Button>
+        <Button asChild>
+          <Link href="/admin/products/new">Add Product</Link>
+        </Button>
       </div>
-      <ProductList products={products} />
+
+      <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
+        {stats.map((s) => (
+          <div key={s.label} className="rounded-lg border p-4">
+            <p className="text-xs text-muted-foreground">{s.label}</p>
+            <p className="text-2xl font-semibold">{s.value.toLocaleString("en-NG")}</p>
+          </div>
+        ))}
+      </div>
+
+      <ProductFilters brands={brands} categories={categories} />
+
+      <ProductList rows={rows} />
+
+      <div className="flex items-center justify-between text-sm">
+        <p className="text-muted-foreground">
+          {filteredCount === 0
+            ? "No products match these filters"
+            : `Showing ${(page - 1) * PRODUCTS_PAGE_SIZE + 1}–${Math.min(page * PRODUCTS_PAGE_SIZE, filteredCount)} of ${filteredCount.toLocaleString("en-NG")}`}
+        </p>
+        <div className="flex items-center gap-2">
+          <Button asChild variant="outline" size="sm" disabled={page <= 1}>
+            <Link
+              href={pageHref(page - 1)}
+              aria-disabled={page <= 1}
+              className={page <= 1 ? "pointer-events-none opacity-50" : ""}
+            >
+              Previous
+            </Link>
+          </Button>
+          <span className="px-2">
+            Page {page} of {totalPages}
+          </span>
+          <Button asChild variant="outline" size="sm" disabled={page >= totalPages}>
+            <Link
+              href={pageHref(page + 1)}
+              aria-disabled={page >= totalPages}
+              className={page >= totalPages ? "pointer-events-none opacity-50" : ""}
+            >
+              Next
+            </Link>
+          </Button>
+        </div>
+      </div>
     </div>
   )
 }
