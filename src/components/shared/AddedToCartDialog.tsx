@@ -45,14 +45,14 @@ export function AddedToCartContent({
         <div className="min-w-0 flex-1">
           <p className="truncate font-medium">{item.name}</p>
           {item.color && (
-            <p className="text-xs text-gray-500">
+            <p className="truncate text-xs text-gray-500">
               {item.color.name}
               {item.size ? ` / ${item.size}` : ""}
             </p>
           )}
           <p className="text-sm text-gray-500">Qty: {item.quantity}</p>
         </div>
-        <div className="text-right">
+        <div className="shrink-0 whitespace-nowrap text-right">
           {item.originalPrice && item.originalPrice > item.price && (
             <span className="block text-xs text-gray-400 line-through">
               {formatPrice(item.originalPrice)}
