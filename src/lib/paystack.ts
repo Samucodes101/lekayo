@@ -12,6 +12,7 @@ export async function initializePayment(
       email,
       amount: String(amount * 100), // SDK types expect amount as a string
       currency: "NGN",
+      reference: `lekayo-${metadata.orderId}-${Date.now()}`,
       metadata,
       callback_url: `${process.env.NEXT_PUBLIC_APP_URL}/checkout/success`,
     });
