@@ -167,3 +167,140 @@ export function detectDeliveryLocation(
 
   return null;
 }
+
+// ---------------------------------------------------------------------------
+// State-based delivery options
+// ---------------------------------------------------------------------------
+
+/** A single delivery/pickup option inside a state, configured by the admin. */
+export type DeliveryOption = {
+  id: string;
+  /** Address or area name shown to the customer, e.g. "Apo Resettlement GUO Terminal Pickup". */
+  label: string;
+  cost: number;
+  /** Expected delivery timeline and any extra notes shown under the label. */
+  description: string;
+};
+
+export type DeliveryState = {
+  id: string;
+  name: string;
+  options: DeliveryOption[];
+};
+
+export const NIGERIAN_STATES = [
+  "Abia",
+  "Adamawa",
+  "Akwa Ibom",
+  "Anambra",
+  "Bauchi",
+  "Bayelsa",
+  "Benue",
+  "Borno",
+  "Cross River",
+  "Delta",
+  "Ebonyi",
+  "Edo",
+  "Ekiti",
+  "Enugu",
+  "Federal Capital Territory",
+  "Gombe",
+  "Imo",
+  "Jigawa",
+  "Kaduna",
+  "Kano",
+  "Katsina",
+  "Kebbi",
+  "Kogi",
+  "Kwara",
+  "Lagos",
+  "Nasarawa",
+  "Niger",
+  "Ogun",
+  "Ondo",
+  "Osun",
+  "Oyo",
+  "Plateau",
+  "Rivers",
+  "Sokoto",
+  "Taraba",
+  "Yobe",
+  "Zamfara",
+];
+
+/**
+ * Builds a state list from the legacy flat `deliveryLocations` setting, so
+ * existing fees keep working until the admin saves the new state settings.
+ */
+export function deliveryStatesFromLegacy(
+  locations: DeliveryLocation[],
+  timeframe = "3-5 business days",
+): DeliveryState[] {
+  return [
+    {
+      id: "federal-capital-territory",
+      name: "Federal Capital Territory",
+      options: locations.map((location) => ({
+        id: location.id,
+        label: location.label,
+        cost: location.cost,
+        description: `Delivery takes ${timeframe}.`,
+      })),
+    },
+  ];
+}
+
+export function normalizeDeliveryStates(
+  value: unknown,
+  legacyLocations: unknown = defaultDeliveryLocations,
+  legacyTimeframe?: unknown,
+): DeliveryState[] {
+  if (!Array.isArray(value)) {
+    return deliveryStatesFromLegacy(
+      normalizeDeliveryLocations(legacyLocations),
+      typeof legacyTimeframe === "string" && legacyTimeframe
+        ? legacyTimeframe
+        : undefined,
+    );
+  }
+
+  return value
+    .map((item) => {
+      if (typeof item !== "object" || item === null) return null;
+      const parsed = item as Record<string, unknown>;
+      const id = String(parsed.id ?? "");
+      const name = typeof parsed.name === "string" ? parsed.name.trim() : "";
+      if (!id || !name) return null;
+      const options = (Array.isArray(parsed.options) ? parsed.options : [])
+        .map((raw) => {
+          if (typeof raw !== "object" || raw === null) return null;
+          const opt = raw as Record<string, unknown>;
+          const optId = String(opt.id ?? "");
+          const label = typeof opt.label === "string" ? opt.label.trim() : "";
+          const cost = Number(opt.cost ?? 0);
+          if (!optId || !label || Number.isNaN(cost) || cost < 0) return null;
+          return {
+            id: optId,
+            label,
+            cost,
+            description:
+              typeof opt.description === "string" ? opt.description : "",
+          };
+        })
+        .filter((opt): opt is DeliveryOption => opt !== null);
+      return { id, name, options };
+    })
+    .filter((state): state is DeliveryState => state !== null);
+}
+
+export function findDeliveryOption(
+  states: DeliveryState[],
+  stateName: string,
+  optionId: string,
+): { state: DeliveryState; option: DeliveryOption } | null {
+  const state = states.find(
+    (s) => s.name.toLowerCase() === stateName.trim().toLowerCase(),
+  );
+  const option = state?.options.find((o) => o.id === optionId);
+  return state && option ? { state, option } : null;
+}

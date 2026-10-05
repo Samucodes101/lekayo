@@ -1,7 +1,10 @@
 import { Prisma } from "@prisma/client";
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
-import { defaultDeliveryLocations } from "@/lib/deliveryLocations";
+import {
+  defaultDeliveryLocations,
+  normalizeDeliveryStates,
+} from "@/lib/deliveryLocations";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 export async function GET() {
@@ -26,6 +29,11 @@ export async function GET() {
       typeof settingsMap.deliveryTimeframe === "string"
         ? settingsMap.deliveryTimeframe
         : "3-5 business days",
+    deliveryStates: normalizeDeliveryStates(
+      settingsMap.deliveryStates,
+      settingsMap.deliveryLocations ?? defaultDeliveryLocations,
+      settingsMap.deliveryTimeframe,
+    ),
   });
 }
 

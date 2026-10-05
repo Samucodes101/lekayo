@@ -1,10 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import {
-  getDeliveryCostForLocation,
-  normalizeDeliveryLocations,
-  defaultDeliveryLocations,
-  detectDeliveryLocation,
+  findDeliveryOption,
+  normalizeDeliveryStates,
 } from "@/lib/deliveryLocations";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
@@ -92,36 +90,31 @@ async function handleCheckoutInit(req: NextRequest) {
     resolvedLocationId = "pickup";
     shippingCost = 0;
   } else {
-    const settings = await prisma.setting.findUnique({
-      where: { key: "deliveryLocations" },
+    const settings = await prisma.setting.findMany({
+      where: {
+        key: { in: ["deliveryStates", "deliveryLocations", "deliveryTimeframe"] },
+      },
     });
-    const deliveryLocations = normalizeDeliveryLocations(
-      settings?.value ?? defaultDeliveryLocations,
+    const settingsMap = Object.fromEntries(settings.map((s) => [s.key, s.value]));
+    const deliveryStates = normalizeDeliveryStates(
+      settingsMap.deliveryStates,
+      settingsMap.deliveryLocations,
+      settingsMap.deliveryTimeframe,
     );
 
-    if (!resolvedLocationId) {
-      const fullAddress = `${address} ${city} ${state}`;
-      const detected = detectDeliveryLocation(fullAddress, deliveryLocations);
-      if (detected) {
-        resolvedLocationId = detected.id;
-      }
-    }
-
-    if (!resolvedLocationId) {
+    const match = findDeliveryOption(
+      deliveryStates,
+      String(state ?? ""),
+      String(deliveryLocation ?? ""),
+    );
+    if (!match) {
       return NextResponse.json(
-        { error: "Could not determine delivery location from your address" },
+        { error: "Please select a valid shipping method for your state" },
         { status: 400 },
       );
     }
-
-    const cost = getDeliveryCostForLocation(resolvedLocationId, deliveryLocations);
-    if (cost === undefined) {
-      return NextResponse.json(
-        { error: "Invalid delivery location" },
-        { status: 400 },
-      );
-    }
-    shippingCost = cost;
+    resolvedLocationId = `${match.state.name} — ${match.option.label}`;
+    shippingCost = match.option.cost;
   }
 
   // ---- Aggregate duplicate variantIds into a single quantity per variant ----

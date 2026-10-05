@@ -4,21 +4,13 @@ import { useState, useEffect } from "react";
 import { useActiveCart } from "@/hooks/useActiveCart";
 import CheckoutForm from "@/components/forms/CheckoutForm";
 import OrderSummary from "@/components/shared/OrderSummary";
-import {
-  defaultDeliveryLocations,
-  DeliveryLocation,
-} from "@/lib/deliveryLocations";
+import type { DeliveryState } from "@/lib/deliveryLocations";
 
 export default function CheckoutPage() {
   const { items, isHydrated } = useActiveCart();
   const [isReady, setIsReady] = useState(false);
   const [shippingCost, setShippingCost] = useState(0);
-  const [deliveryLocations, setDeliveryLocations] = useState<
-    DeliveryLocation[]
-  >(defaultDeliveryLocations);
-  const [deliveryTimeframe, setDeliveryTimeframe] = useState(
-    "3-5 business days",
-  );
+  const [deliveryStates, setDeliveryStates] = useState<DeliveryState[]>([]);
 
   useEffect(() => {
     setIsReady(true);
@@ -30,14 +22,8 @@ export default function CheckoutPage() {
         const res = await fetch("/api/settings");
         if (!res.ok) return;
         const data = await res.json();
-        if (
-          Array.isArray(data.deliveryLocations) &&
-          data.deliveryLocations.length > 0
-        ) {
-          setDeliveryLocations(data.deliveryLocations);
-        }
-        if (typeof data.deliveryTimeframe === "string" && data.deliveryTimeframe) {
-          setDeliveryTimeframe(data.deliveryTimeframe);
+        if (Array.isArray(data.deliveryStates)) {
+          setDeliveryStates(data.deliveryStates);
         }
       } catch (error) {
         console.error("Failed to load settings:", error);
@@ -85,8 +71,7 @@ export default function CheckoutPage() {
       <h1 className="text-3xl font-serif mb-6">Checkout</h1>
       <div className="grid md:grid-cols-2 gap-8">
         <CheckoutForm
-          deliveryLocations={deliveryLocations}
-          deliveryTimeframe={deliveryTimeframe}
+          deliveryStates={deliveryStates}
           onShippingChange={setShippingCost}
         />
         <div>

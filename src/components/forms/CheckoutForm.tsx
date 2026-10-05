@@ -15,14 +15,24 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { useActiveCart } from "@/hooks/useActiveCart";
 import { toast } from "@/hooks/use-toast";
-import {
-  type DeliveryLocation,
-  detectDeliveryLocation,
-  getDeliveryCostForLocation,
-} from "@/lib/deliveryLocations";
+import { type DeliveryState } from "@/lib/deliveryLocations";
+
+const formatNaira = (amount: number) =>
+  new Intl.NumberFormat("en-NG", {
+    style: "currency",
+    currency: "NGN",
+    maximumFractionDigits: 0,
+  }).format(amount);
 
 const checkoutSchema = z.object({
   email: z.string().email(),
@@ -38,14 +48,12 @@ const checkoutSchema = z.object({
 type CheckoutValues = z.infer<typeof checkoutSchema>;
 
 type CheckoutFormProps = {
-  deliveryLocations: DeliveryLocation[];
-  deliveryTimeframe: string;
+  deliveryStates: DeliveryState[];
   onShippingChange?: (shippingCost: number) => void;
 };
 
 export default function CheckoutForm({
-  deliveryLocations,
-  deliveryTimeframe,
+  deliveryStates,
   onShippingChange,
 }: CheckoutFormProps) {
   const [loading, setLoading] = useState(false);
@@ -65,25 +73,31 @@ export default function CheckoutForm({
     },
   });
 
-  const address = form.watch("address");
-  const city = form.watch("city");
+  const [deliveryOptionId, setDeliveryOptionId] = useState("");
   const state = form.watch("state");
 
-  const fullAddress = `${address ?? ""} ${city ?? ""} ${state ?? ""}`;
-
-  const detectedLocation = useMemo(
+  // Only states with at least one option can be delivered to.
+  const availableStates = useMemo(
     () =>
-      deliveryMethod === "delivery"
-        ? detectDeliveryLocation(fullAddress, deliveryLocations)
-        : null,
-    [fullAddress, deliveryLocations, deliveryMethod],
+      deliveryStates
+        .filter((st) => st.options.length > 0)
+        .sort((a, b) => a.name.localeCompare(b.name)),
+    [deliveryStates],
   );
 
-  const shippingCost = useMemo(() => {
-    if (deliveryMethod === "pickup") return 0;
-    if (!detectedLocation) return 0;
-    return getDeliveryCostForLocation(detectedLocation.id, deliveryLocations) ?? 0;
-  }, [deliveryMethod, detectedLocation, deliveryLocations]);
+  const selectedState = availableStates.find((st) => st.name === state);
+  const selectedOption =
+    deliveryMethod === "delivery"
+      ? selectedState?.options.find((o) => o.id === deliveryOptionId)
+      : undefined;
+
+  // Default to the first option whenever the state changes.
+  useEffect(() => {
+    setDeliveryOptionId(selectedState?.options[0]?.id ?? "");
+  }, [selectedState]);
+
+  const shippingCost =
+    deliveryMethod === "pickup" ? 0 : selectedOption?.cost ?? 0;
 
   // Notify parent whenever shipping cost changes
   useEffect(() => {
@@ -104,11 +118,11 @@ export default function CheckoutForm({
   };
 
   const onSubmit = async (data: CheckoutValues) => {
-    if (deliveryMethod === "delivery" && !detectedLocation) {
+    if (deliveryMethod === "delivery" && !selectedOption) {
       toast({
-        title: "Delivery location not found",
+        title: "Select a shipping method",
         description:
-          "We couldn't identify your delivery area from your address. Please check your city/state, or choose Pickup.",
+          "Please choose your state and a shipping method, or choose Pickup.",
         variant: "destructive",
       });
       return;
@@ -128,7 +142,7 @@ export default function CheckoutForm({
             price: item.price,
           })),
           deliveryLocation:
-            deliveryMethod === "pickup" ? "pickup" : detectedLocation?.id ?? "",
+            deliveryMethod === "pickup" ? "pickup" : selectedOption?.id ?? "",
           shippingCost,
         }),
         headers: { "Content-Type": "application/json" },
@@ -277,9 +291,20 @@ export default function CheckoutForm({
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>State</FormLabel>
-                    <FormControl>
-                      <Input {...field} />
-                    </FormControl>
+                    <Select value={field.value} onValueChange={field.onChange}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select state" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {availableStates.map((st) => (
+                          <SelectItem key={st.id} value={st.name}>
+                            {st.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -315,34 +340,52 @@ export default function CheckoutForm({
           )}
         />
 
-        {/* Delivery info */}
+        {/* Shipping method for the selected state */}
         {deliveryMethod === "delivery" && (
-          <div className="rounded-md border bg-muted/50 p-4 space-y-1">
-            {detectedLocation ? (
-              <>
-                <div className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">Delivery area</span>
-                  <span className="font-medium">{detectedLocation.label}</span>
-                </div>
-                <div className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">Delivery fee</span>
-                  <span className="font-medium">
-                    {shippingCost === 0
-                      ? "Free"
-                      : new Intl.NumberFormat("en-NG", {
-                          style: "currency",
-                          currency: "NGN",
-                        }).format(shippingCost)}
-                  </span>
-                </div>
-                <div className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">Estimated delivery</span>
-                  <span className="font-medium">{deliveryTimeframe}</span>
-                </div>
-              </>
+          <div className="space-y-3">
+            <h3 className="font-semibold">Shipping method</h3>
+            {selectedState ? (
+              <RadioGroup
+                value={deliveryOptionId}
+                onValueChange={setDeliveryOptionId}
+                className="space-y-0 overflow-hidden rounded-md border"
+              >
+                {selectedState.options.map((option) => (
+                  <Label
+                    key={option.id}
+                    htmlFor={`ship-${option.id}`}
+                    className={`flex cursor-pointer items-start gap-3 border-b p-4 font-normal last:border-b-0 ${
+                      option.id === deliveryOptionId ? "bg-muted/50" : ""
+                    }`}
+                  >
+                    <RadioGroupItem
+                      value={option.id}
+                      id={`ship-${option.id}`}
+                      className="mt-0.5"
+                    />
+                    <div className="flex-1 space-y-1">
+                      <div className="flex justify-between gap-3">
+                        <span className="font-medium uppercase">
+                          {option.label}
+                        </span>
+                        <span className="whitespace-nowrap font-medium">
+                          {option.cost === 0 ? "Free" : formatNaira(option.cost)}
+                        </span>
+                      </div>
+                      {option.description && (
+                        <p className="whitespace-pre-line text-sm text-muted-foreground">
+                          {option.description}
+                        </p>
+                      )}
+                    </div>
+                  </Label>
+                ))}
+              </RadioGroup>
             ) : (
-              <p className="text-sm text-muted-foreground">
-                Make sure your address is correct.
+              <p className="rounded-md border bg-muted/50 p-4 text-sm text-muted-foreground">
+                {availableStates.length > 0
+                  ? "Select your state to see available shipping methods."
+                  : "Delivery is not available right now. Please choose Pickup."}
               </p>
             )}
           </div>

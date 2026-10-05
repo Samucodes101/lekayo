@@ -5,14 +5,24 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { toast } from "@/hooks/use-toast";
+import {
+  NIGERIAN_STATES,
+  type DeliveryOption,
+  type DeliveryState,
+} from "@/lib/deliveryLocations";
 
-type DeliveryLocation = {
-  id: string;
-  label: string;
-  cost: number;
-  keywords?: string[];
-};
+const newId = () =>
+  crypto.randomUUID?.() ??
+  `${Date.now()}-${Math.random().toString(36).slice(2)}`;
 
 type SettingsState = {
   siteName: string;
@@ -22,8 +32,7 @@ type SettingsState = {
   address: string;
   shippingRate: number;
   taxRate: number;
-  deliveryLocations: DeliveryLocation[];
-  deliveryTimeframe: string;
+  deliveryStates: DeliveryState[];
 };
 
 export default function SettingsPage() {
@@ -35,27 +44,85 @@ export default function SettingsPage() {
     address: "",
     shippingRate: 0,
     taxRate: 0,
-    deliveryLocations: [],
-    deliveryTimeframe: "3-5 business days",
+    deliveryStates: [],
   });
   const [loading, setLoading] = useState(true);
+  const [stateToAdd, setStateToAdd] = useState("");
 
   useEffect(() => {
     fetch("/api/settings")
       .then((res) => res.json())
       .then((data) => {
         setSettings((prev) => ({
-          ...prev,
-          ...data,
-          deliveryLocations: Array.isArray(data.deliveryLocations)
-            ? data.deliveryLocations
+          siteName: data.siteName ?? prev.siteName,
+          siteDescription: data.siteDescription ?? prev.siteDescription,
+          contactEmail: data.contactEmail ?? prev.contactEmail,
+          contactPhone: data.contactPhone ?? prev.contactPhone,
+          address: data.address ?? prev.address,
+          shippingRate: data.shippingRate ?? prev.shippingRate,
+          taxRate: data.taxRate ?? prev.taxRate,
+          deliveryStates: Array.isArray(data.deliveryStates)
+            ? data.deliveryStates
             : [],
         }));
         setLoading(false);
       });
   }, []);
 
+  const updateState = (stateId: string, patch: Partial<DeliveryState>) =>
+    setSettings((prev) => ({
+      ...prev,
+      deliveryStates: prev.deliveryStates.map((st) =>
+        st.id === stateId ? { ...st, ...patch } : st,
+      ),
+    }));
+
+  const updateOption = (
+    stateId: string,
+    optionId: string,
+    patch: Partial<DeliveryOption>,
+  ) =>
+    setSettings((prev) => ({
+      ...prev,
+      deliveryStates: prev.deliveryStates.map((st) =>
+        st.id === stateId
+          ? {
+              ...st,
+              options: st.options.map((o) =>
+                o.id === optionId ? { ...o, ...patch } : o,
+              ),
+            }
+          : st,
+      ),
+    }));
+
+  const addState = () => {
+    if (!stateToAdd) return;
+    setSettings((prev) => ({
+      ...prev,
+      deliveryStates: [
+        ...prev.deliveryStates,
+        { id: newId(), name: stateToAdd, options: [] },
+      ],
+    }));
+    setStateToAdd("");
+  };
+
+  const availableStates = NIGERIAN_STATES.filter(
+    (name) => !settings.deliveryStates.some((st) => st.name === name),
+  );
+
   const handleSave = async () => {
+    const invalid = settings.deliveryStates.some((st) =>
+      st.options.some((o) => !o.label.trim()),
+    );
+    if (invalid) {
+      toast({
+        title: "Every delivery option needs an address/name",
+        variant: "destructive",
+      });
+      return;
+    }
     const res = await fetch("/api/settings", {
       method: "PUT",
       body: JSON.stringify(settings),
@@ -149,134 +216,161 @@ export default function SettingsPage() {
               }
             />
           </div>
-          <div>
-            <Label>Delivery Timeframe</Label>
-            <p className="text-sm text-muted-foreground mb-2">
-              Shown to customers at checkout (e.g. "3-5 business days"
-              or "Aug 16-20").
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Delivery States &amp; Fees</CardTitle>
+          <p className="text-sm text-muted-foreground">
+            Customers pick their state at checkout, then choose one of the
+            delivery options you add for that state.
+          </p>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {settings.deliveryStates.length === 0 && (
+            <p className="text-sm text-muted-foreground">
+              No delivery states yet. Customers will only be able to choose
+              pickup.
             </p>
-            <Input
-              value={settings.deliveryTimeframe}
-              onChange={(e) =>
-                setSettings({ ...settings, deliveryTimeframe: e.target.value })
-              }
-              placeholder="3-5 business days"
-            />
-          </div>
-          <div>
-            <Label>Delivery Locations</Label>
-            <p className="text-sm text-muted-foreground mb-2">
-              Add keywords (comma-separated) to auto-detect the location from a
-              customer's address.
-            </p>
-            <div className="space-y-3 mt-2">
-              {settings.deliveryLocations.map((location, index) => (
-                <div key={location.id} className="space-y-2 rounded-md border p-3">
-                  <div className="grid grid-cols-12 gap-3 items-end">
-                    <div className="col-span-5">
-                      <Label className="text-xs">Label</Label>
+          )}
+
+          {settings.deliveryStates.map((st) => (
+            <div key={st.id} className="space-y-3 rounded-md border p-4">
+              <div className="flex items-center justify-between gap-3">
+                <h3 className="font-semibold">{st.name}</h3>
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  onClick={() =>
+                    setSettings((prev) => ({
+                      ...prev,
+                      deliveryStates: prev.deliveryStates.filter(
+                        (s) => s.id !== st.id,
+                      ),
+                    }))
+                  }
+                >
+                  Remove state
+                </Button>
+              </div>
+
+              {st.options.length === 0 && (
+                <p className="text-sm text-muted-foreground">
+                  No delivery options. This state won&apos;t appear at checkout
+                  until you add one.
+                </p>
+              )}
+
+              {st.options.map((option) => (
+                <div
+                  key={option.id}
+                  className="space-y-2 rounded-md border bg-muted/30 p-3"
+                >
+                  <div className="grid grid-cols-1 gap-3 sm:grid-cols-12 sm:items-end">
+                    <div className="sm:col-span-7">
+                      <Label className="text-xs">Address / location</Label>
                       <Input
-                        placeholder="e.g. Maitama"
-                        value={location.label}
-                        onChange={(e) => {
-                          const updated = [...settings.deliveryLocations];
-                          updated[index] = {
-                            ...updated[index],
+                        placeholder="e.g. Apo Resettlement GUO Terminal Pickup"
+                        value={option.label}
+                        onChange={(e) =>
+                          updateOption(st.id, option.id, {
                             label: e.target.value,
-                          };
-                          setSettings({
-                            ...settings,
-                            deliveryLocations: updated,
-                          });
-                        }}
+                          })
+                        }
                       />
                     </div>
-                    <div className="col-span-5">
-                      <Label className="text-xs">Cost (NGN)</Label>
+                    <div className="sm:col-span-3">
+                      <Label className="text-xs">Fee (NGN)</Label>
                       <Input
                         type="number"
                         step="1"
                         min="0"
-                        placeholder="3000"
-                        value={location.cost}
-                        onChange={(e) => {
-                          const updated = [...settings.deliveryLocations];
-                          updated[index] = {
-                            ...updated[index],
+                        placeholder="7000"
+                        value={option.cost}
+                        onChange={(e) =>
+                          updateOption(st.id, option.id, {
                             cost: Number(e.target.value),
-                          };
-                          setSettings({
-                            ...settings,
-                            deliveryLocations: updated,
-                          });
-                        }}
+                          })
+                        }
                       />
                     </div>
-                    <div className="col-span-2">
+                    <div className="sm:col-span-2">
                       <Button
                         variant="secondary"
-                        onClick={() => {
-                          setSettings({
-                            ...settings,
-                            deliveryLocations:
-                              settings.deliveryLocations.filter(
-                                (_, i) => i !== index,
-                              ),
-                          });
-                        }}
+                        className="w-full"
+                        onClick={() =>
+                          updateState(st.id, {
+                            options: st.options.filter(
+                              (o) => o.id !== option.id,
+                            ),
+                          })
+                        }
                       >
                         Remove
                       </Button>
                     </div>
                   </div>
                   <div>
-                    <Label className="text-xs">Keywords</Label>
-                    <Input
-                      placeholder="maitama, maitama extension, aminu kano"
-                      value={(location.keywords ?? []).join(", ")}
-                      onChange={(e) => {
-                        const updated = [...settings.deliveryLocations];
-                        updated[index] = {
-                          ...updated[index],
-                          keywords: e.target.value
-                            .split(",")
-                            .map((k) => k.trim())
-                            .filter(Boolean),
-                        };
-                        setSettings({
-                          ...settings,
-                          deliveryLocations: updated,
-                        });
-                      }}
+                    <Label className="text-xs">
+                      Expected delivery timeline / notes
+                    </Label>
+                    <Textarea
+                      rows={2}
+                      placeholder="Delivery takes 5-15 business days. You might be asked to balance up on your delivery fee if it weighs higher than 2kg"
+                      value={option.description}
+                      onChange={(e) =>
+                        updateOption(st.id, option.id, {
+                          description: e.target.value,
+                        })
+                      }
                     />
                   </div>
                 </div>
               ))}
+
               <Button
-                variant="secondary"
-                onClick={() => {
-                  setSettings({
-                    ...settings,
-                    deliveryLocations: [
-                      ...settings.deliveryLocations,
-                      {
-                        id:
-                          crypto.randomUUID?.() ??
-                          `${Date.now()}-${settings.deliveryLocations.length}`,
-                        label: "",
-                        cost: 0,
-                      },
+                variant="outline"
+                size="sm"
+                onClick={() =>
+                  updateState(st.id, {
+                    options: [
+                      ...st.options,
+                      { id: newId(), label: "", cost: 0, description: "" },
                     ],
-                  });
-                }}
+                  })
+                }
               >
-                Add location
+                Add delivery option
               </Button>
             </div>
+          ))}
+
+          <div className="flex flex-col gap-2 sm:flex-row">
+            <Select value={stateToAdd} onValueChange={setStateToAdd}>
+              <SelectTrigger className="sm:w-72">
+                <SelectValue placeholder="Select a state to add" />
+              </SelectTrigger>
+              <SelectContent>
+                {availableStates.map((name) => (
+                  <SelectItem key={name} value={name}>
+                    {name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Button
+              variant="secondary"
+              onClick={addState}
+              disabled={!stateToAdd}
+            >
+              Add state
+            </Button>
           </div>
-          <Button onClick={handleSave}>Save Settings</Button>
         </CardContent>
       </Card>
+
+      <Button onClick={handleSave}>Save Settings</Button>
     </div>
   );
 }
