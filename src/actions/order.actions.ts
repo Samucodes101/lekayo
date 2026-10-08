@@ -5,6 +5,7 @@ import { prisma } from "@/lib/db"
 import { getServerSession } from "next-auth/next"
 import { authOptions } from "@/lib/auth"
 import { OrderStatus } from "@prisma/client"
+import { restockOrder } from "@/lib/stockReservation"
 
 export async function updateOrderStatus(formData: FormData) {
   const session = await getServerSession(authOptions)
@@ -19,9 +20,15 @@ export async function updateOrderStatus(formData: FormData) {
     throw new Error("Missing orderId or status")
   }
 
-  const order = await prisma.order.update({
-    where: { id: orderId },
-    data: { status },
+  const order = await prisma.$transaction(async (tx) => {
+    // Cancelled and returned orders put their units back into stock.
+    if (status === "CANCELLED" || status === "RETURNED") {
+      await restockOrder(tx, orderId)
+    }
+    return tx.order.update({
+      where: { id: orderId },
+      data: { status },
+    })
   })
   revalidatePath(`/admin/orders/${orderId}`)
   revalidatePath("/admin/orders")

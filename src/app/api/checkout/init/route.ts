@@ -7,11 +7,6 @@ import {
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { fetchActiveFlashSales, resolveCheckoutPrice } from "@/lib/flashSale";
-import {
-  checkStockAvailability,
-  decrementStockOrThrow,
-  StockShortageError,
-} from "@/lib/stockReservation";
 
 /**
  * POST /api/checkout/init
@@ -24,12 +19,10 @@ import {
  * recalculated against currently-active flash sales.  The client-sent price
  * is ignored; the server-authoritative price is used instead.
  *
- * Stock is also **enforced server-side**: every item's requested quantity is
- * re-checked against the live ProductVariant.stock at the moment of order
- * creation.  The check and the decrement happen atomically inside the same
- * transaction that creates the order, so two concurrent checkouts cannot both
- * pass the check on the final unit.  If any item is short, the order is
- * rejected (409) before payment is ever initialized.
+ * Stock is **checked** server-side here (409 if any item is short) but not
+ * deducted: an unpaid order holds no inventory.  Stock is re-checked when
+ * payment is initialized (/api/checkout/pay) and deducted only once the
+ * payment gateway confirms the charge (see markOrderPaid).
  */
 
 async function handleCheckoutInit(req: NextRequest) {
@@ -269,42 +262,10 @@ async function handleCheckoutInit(req: NextRequest) {
 
   const serverTotal = Math.round((calculatedSubtotal + shippingCost) * 100) / 100;
 
-  // ---- Create order + reserve stock atomically ----
+  // ---- Create order (stock is deducted on payment confirmation) ----
   let order;
   try {
     order = await prisma.$transaction(async (tx) => {
-      // Atomically decrement stock for each item.  The guarded `stock >= qty`
-      // condition means a concurrent checkout that grabbed the last unit will
-      // cause this `updateMany` to match 0 rows, which we treat as a shortage
-      // and roll back the whole transaction.
-      for (const item of aggregatedItems) {
-        const decremented = await tx.productVariant.updateMany({
-          where: { id: item.variantId, stock: { gte: item.quantity } },
-          data: { stock: { decrement: item.quantity } },
-        });
-
-        if (decremented.count !== 1) {
-          // Re-read live stock to report an accurate "available" figure.
-          const fresh = await tx.productVariant.findUnique({
-            where: { id: item.variantId },
-            select: { stock: true, sku: true },
-          });
-          const product =
-            variantMap.get(item.variantId)?.productId
-              ? productMap.get(variantMap.get(item.variantId)!.productId)
-              : undefined;
-          throw new StockShortageError([
-            {
-              variantId: item.variantId,
-              name: product?.name ?? fresh?.sku ?? "Item",
-              sku: fresh?.sku ?? "",
-              requested: item.quantity,
-              available: fresh?.stock ?? 0,
-            },
-          ]);
-        }
-      }
-
       // Create shipping address (or use pickup placeholder)
       const shippingAddress = isPickup
         ? null
@@ -344,12 +305,6 @@ async function handleCheckoutInit(req: NextRequest) {
       });
     });
   } catch (error) {
-    if (error instanceof StockShortageError) {
-      return NextResponse.json(
-        { error: "Some items exceed available stock", shortItems: error.shortItems },
-        { status: 409 },
-      );
-    }
     console.error("checkout/init failed:", error);
     throw error;
   }

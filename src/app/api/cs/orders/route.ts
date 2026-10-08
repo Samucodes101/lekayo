@@ -99,6 +99,7 @@ export async function POST(req: NextRequest) {
           status: "PAID",
           paidAt: new Date(),
           paymentMethod,
+          stockDeducted: true,
           subtotal,
           discount,
           shippingCost: 0,

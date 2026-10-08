@@ -3,6 +3,10 @@ import { PrismaClient } from "@prisma/client";
 /**
  * Release stock for stale PENDING orders.
  *
+ * NOTE: new orders no longer deduct stock until payment is confirmed, so this
+ * only affects orders created before that change (stockDeducted = true while
+ * still PENDING).
+ *
  * Any `Order` with status `PENDING`, no `paymentReference`, and a `createdAt`
  * older than 30 minutes is cancelled and its reserved stock is returned to the
  * owning variants.
@@ -36,6 +40,7 @@ async function releaseStaleOrders() {
     where: {
       status: "PENDING",
       paymentReference: null,
+      stockDeducted: true,
       createdAt: { lt: cutoff },
     },
     include: { items: true },
@@ -59,8 +64,9 @@ async function releaseStaleOrders() {
           id: order.id,
           status: "PENDING",
           paymentReference: null,
+          stockDeducted: true,
         },
-        data: { status: "CANCELLED" },
+        data: { status: "CANCELLED", stockDeducted: false },
       });
 
       if (transitioned.count !== 1) {

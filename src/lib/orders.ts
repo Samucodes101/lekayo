@@ -1,5 +1,6 @@
 import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/db";
+import { deductOrderStock } from "@/lib/stockReservation";
 
 const orderWithDetails = Prisma.validator<Prisma.OrderInclude>()({
   items: { include: { variant: { include: { product: true } } } },
@@ -11,7 +12,7 @@ export type OrderWithDetails = Prisma.OrderGetPayload<{
 }>;
 
 /**
- * Marks an order as PAID using its payment reference.
+ * Marks an order as PAID using its payment reference and deducts its stock.
  * Idempotent: repeated webhook deliveries never double-process.
  */
 export async function markOrderPaid(
@@ -52,13 +53,31 @@ export async function markOrderPaid(
 
   const paidAt = opts.paidAt ? new Date(opts.paidAt) : new Date();
 
-  return prisma.order.update({
-    where: { id: order.id },
-    data: {
-      status: "PAID",
-      paidAt,
-      paymentMethod: order.paymentMethod || opts.gateway,
-    },
-    include: orderWithDetails,
+  return prisma.$transaction(async (tx) => {
+    const shortItems = await deductOrderStock(tx, order.id);
+    // Someone else bought the last unit between checkout and payment. The
+    // customer has still paid, so keep the order and flag it for the admin.
+    const shortageNote =
+      shortItems.length > 0
+        ? `STOCK SHORTAGE at payment: ${shortItems
+            .map((s) => `${s.name} (${s.sku}) needed ${s.requested}, had ${s.available}`)
+            .join("; ")}`
+        : null;
+    if (shortageNote) {
+      console.warn(`[payments] ${order.orderNumber} ${shortageNote}`);
+    }
+
+    return tx.order.update({
+      where: { id: order.id },
+      data: {
+        status: "PAID",
+        paidAt,
+        paymentMethod: order.paymentMethod || opts.gateway,
+        ...(shortageNote && {
+          notes: [order.notes, shortageNote].filter(Boolean).join("\n"),
+        }),
+      },
+      include: orderWithDetails,
+    });
   });
 }

@@ -2,6 +2,7 @@
 import { prisma } from "@/lib/db";
 import { initializePayment } from "@/lib/paystack";
 import { initializeFlutterwavePayment } from "@/lib/flutterwave";
+import { checkStockAvailability } from "@/lib/stockReservation";
 
 /**
  * POST /api/checkout/pay
@@ -37,6 +38,28 @@ export async function POST(req: NextRequest) {
     return NextResponse.json(
       { error: "This order has already been paid" },
       { status: 400 },
+    );
+  }
+
+  if (order.status !== "PENDING") {
+    return NextResponse.json(
+      { error: "This order can no longer be paid" },
+      { status: 400 },
+    );
+  }
+
+  // Stock isn't held for unpaid orders, so make sure it's still there before
+  // the customer pays.
+  const { shortItems } = await checkStockAvailability(
+    order.items.map((item) => ({
+      variantId: item.variantId,
+      quantity: item.quantity,
+    })),
+  );
+  if (shortItems.length > 0) {
+    return NextResponse.json(
+      { error: "Some items in this order are no longer in stock", shortItems },
+      { status: 409 },
     );
   }
 

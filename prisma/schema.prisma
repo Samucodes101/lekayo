@@ -275,6 +275,9 @@ model Order {
   paymentMethod   String?
   paymentReference String?
   paidAt          DateTime?
+  /// True once this order's items have been taken out of ProductVariant.stock
+  /// (on payment confirmation, or immediately for in-store orders).
+  stockDeducted   Boolean     @default(false)
   shippedAt       DateTime?
   deliveredAt     DateTime?
   notes           String?     @db.Text
