@@ -8,7 +8,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { formatPrice } from "@/lib/utils"
 
 type Customer = { id: string; name: string | null; email: string | null; orderCount: number; totalSpent: number; createdAt: string | Date }
-type Order = { id: string; orderNumber: string; email: string | null; phone: string | null; createdAt: string | Date; total: number; status: string }
+type Order = { id: string; orderNumber: string; name: string | null; email: string | null; phone: string | null; delivery: string | null; createdAt: string | Date; total: number; status: string }
 type AuditLog = { id: string; createdAt: string | Date; user: { email: string | null } | null; userEmail: string | null; action: string; resourceType: string; ipAddress: string | null }
 
 function queryMatch(values: unknown[], query: string) {
@@ -27,11 +27,11 @@ export function SearchableCustomers({ customers }: { customers: Customer[] }) {
 
 export function SearchableOrders({ orders }: { orders: Order[] }) {
   const [query, setQuery] = useState("")
-  const rows = orders.filter((order) => queryMatch([order.orderNumber, order.email, order.phone, order.status], query))
+  const rows = orders.filter((order) => queryMatch([order.orderNumber, order.name, order.email, order.phone, order.delivery, order.status], query))
   return <>
     <Input placeholder="Search order, customer, or status..." value={query} onChange={(event) => setQuery(event.target.value)} className="w-full md:w-72" />
     <Button variant="outline" type="button" onClick={() => setQuery("")}>Clear</Button>
-    <Table><TableHeader><TableRow><TableHead>Order #</TableHead><TableHead>Customer</TableHead><TableHead>Date</TableHead><TableHead>Total</TableHead><TableHead>Status</TableHead><TableHead /></TableRow></TableHeader><TableBody>{rows.map((order) => <TableRow key={order.id}><TableCell className="font-mono">{order.orderNumber}</TableCell><TableCell>{order.email || order.phone || "Walk-in customer"}</TableCell><TableCell>{new Date(order.createdAt).toLocaleDateString()}</TableCell><TableCell>{formatPrice(order.total)}</TableCell><TableCell className="capitalize">{order.status}</TableCell><TableCell><Link href={`/admin/orders/${order.id}`} className="text-blue-600 underline">View</Link></TableCell></TableRow>)}</TableBody></Table>
+    <Table><TableHeader><TableRow><TableHead>Order #</TableHead><TableHead>Customer</TableHead><TableHead>Delivery</TableHead><TableHead>Date</TableHead><TableHead>Total</TableHead><TableHead>Status</TableHead><TableHead /></TableRow></TableHeader><TableBody>{rows.map((order) => <TableRow key={order.id}><TableCell className="font-mono">{order.orderNumber}</TableCell><TableCell>{order.name || order.email || order.phone ? <div className="space-y-0.5">{order.name && <div className="font-medium">{order.name}</div>}{order.email && <div className="text-sm text-gray-500">{order.email}</div>}{order.phone && <div className="text-sm text-gray-500">{order.phone}</div>}</div> : "Walk-in customer"}</TableCell><TableCell className="text-sm">{order.delivery || "—"}</TableCell><TableCell>{new Date(order.createdAt).toLocaleDateString()}</TableCell><TableCell>{formatPrice(order.total)}</TableCell><TableCell className="capitalize">{order.status}</TableCell><TableCell><Link href={`/admin/orders/${order.id}`} className="text-blue-600 underline">View</Link></TableCell></TableRow>)}</TableBody></Table>
   </>
 }
 

@@ -8,6 +8,15 @@ import { updateOrderStatus } from "@/actions/order.actions"
 import { OrderStatus } from "@prisma/client"
 import Link from "next/link"
 
+function DetailRow({ label, value }: { label: string; value?: string | null }) {
+  return (
+    <div className="flex justify-between gap-4">
+      <dt className="text-gray-500">{label}</dt>
+      <dd className="text-right font-medium break-words">{value || "—"}</dd>
+    </div>
+  )
+}
+
 export default async function AdminOrderDetailPage({ params }: { params: { id: string } }) {
   const order = await prisma.order.findUnique({
     where: { id: params.id },
@@ -20,6 +29,7 @@ export default async function AdminOrderDetailPage({ params }: { params: { id: s
   })
   if (!order) notFound()
 
+  const isPickup = order.deliveryLocation === "pickup"
   const statuses: OrderStatus[] = ["PENDING", "PAID", "PROCESSING", "PACKED", "SHIPPED", "DELIVERED", "CANCELLED", "RETURNED"]
 
   return (
@@ -56,21 +66,35 @@ export default async function AdminOrderDetailPage({ params }: { params: { id: s
         <Card>
           <CardHeader><CardTitle>Customer</CardTitle></CardHeader>
           <CardContent>
-            <p>{order.user?.name || order.customerName || "N/A"}</p>
-            <p>{order.user?.email || order.email || order.user?.phone || order.customerPhone || "Walk-in customer"}</p>
+            <dl className="space-y-2 text-sm">
+              <DetailRow label="Name" value={order.customerName || order.user?.name} />
+              <DetailRow label="Email" value={order.email || order.user?.email} />
+              <DetailRow label="Phone" value={order.customerPhone || order.shippingAddress?.phone || order.user?.phone} />
+              <DetailRow label="Account" value={order.user ? "Registered customer" : order.email ? "Guest checkout" : "Walk-in customer"} />
+              <DetailRow label="Placed" value={new Date(order.createdAt).toLocaleString()} />
+            </dl>
           </CardContent>
         </Card>
         <Card>
-          <CardHeader><CardTitle>Shipping Address</CardTitle></CardHeader>
+          <CardHeader><CardTitle>Delivery</CardTitle></CardHeader>
           <CardContent>
-            {order.shippingAddress ? (
-              <>
-                <p>{order.shippingAddress.firstName} {order.shippingAddress.lastName}</p>
-                <p>{order.shippingAddress.addressLine1}</p>
-                <p>{order.shippingAddress.city}, {order.shippingAddress.state}</p>
-                <p>{order.shippingAddress.country}</p>
-              </>
-            ) : "No shipping address"}
+            <dl className="space-y-2 text-sm">
+              <DetailRow label="Method" value={isPickup ? "Pickup" : order.shippingAddress || order.deliveryLocation ? "Delivery" : null} />
+              {!isPickup && <DetailRow label="Shipping option" value={order.deliveryLocation} />}
+              <DetailRow label="Shipping cost" value={formatPrice(order.shippingCost)} />
+              {order.shippingAddress && (
+                <>
+                  <DetailRow label="Recipient" value={`${order.shippingAddress.firstName} ${order.shippingAddress.lastName}`} />
+                  <DetailRow label="Address" value={[order.shippingAddress.addressLine1, order.shippingAddress.addressLine2].filter(Boolean).join(", ")} />
+                  <DetailRow label="City" value={order.shippingAddress.city} />
+                  <DetailRow label="State" value={order.shippingAddress.state} />
+                  <DetailRow label="Postal code" value={order.shippingAddress.postalCode} />
+                  <DetailRow label="Country" value={order.shippingAddress.country} />
+                  <DetailRow label="Phone" value={order.shippingAddress.phone} />
+                </>
+              )}
+              {order.notes && <DetailRow label="Notes" value={order.notes} />}
+            </dl>
           </CardContent>
         </Card>
       </div>
