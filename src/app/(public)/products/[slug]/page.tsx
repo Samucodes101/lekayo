@@ -5,8 +5,8 @@ import { redirect } from "next/navigation"
 import { prisma } from "@/lib/db"
 import ProductDetailClient from "@/components/shared/ProductDetailClient"
 import Breadcrumb from "@/components/shared/Breadcrumb"
-import { fetchActiveFlashSales, resolveCheckoutPrice } from "@/lib/flashSale"
-import { getProductUrl } from "@/lib/utils"
+import { enrichProductsWithFlashSales, fetchActiveFlashSales, resolveCheckoutPrice } from "@/lib/flashSale"
+import { getProductUrl, getShopUrl } from "@/lib/utils"
 import { resolveProductBySlug } from "@/lib/productQueries"
 
 export default async function ProductPage({ params }: { params: { slug: string } }) {
@@ -23,7 +23,7 @@ export default async function ProductPage({ params }: { params: { slug: string }
   const activeSales = await fetchActiveFlashSales()
   const flashResolved = resolveCheckoutPrice(product, null, activeSales)
 
-  const related = await prisma.product.findMany({
+  const rawRelated = await prisma.product.findMany({
     where: { categoryId: product.categoryId, id: { not: product.id }, status: "PUBLISHED", variants: { some: { isActive: true } } },
     take: 4,
     include: {
@@ -34,10 +34,11 @@ export default async function ProductPage({ params }: { params: { slug: string }
       brand: true,
     },
   })
+  const related = await enrichProductsWithFlashSales(rawRelated)
 
   return (
     <div className="container mx-auto px-4 py-8">
-      <Breadcrumb items={[{ name: product.category.name, href: `/shop/${product.category.slug}` }, { name: product.name, href: getProductUrl(product.slug || product.name) }]} />
+      <Breadcrumb items={[{ name: product.category.name, href: getShopUrl(product.category.slug) }, { name: product.name, href: getProductUrl(product.slug || product.name) }]} />
       <ProductDetailClient
         product={{
           ...product,

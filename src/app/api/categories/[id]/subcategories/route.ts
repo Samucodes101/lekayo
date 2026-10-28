@@ -5,6 +5,7 @@ import { authOptions } from "@/lib/auth"
 import { Role } from "@prisma/client"
 import { DATA_TAGS, getSubcategoriesByCategory } from "@/lib/data"
 import { revalidateTag } from "next/cache"
+import { generateSlug } from "@/lib/utils"
 
 export const dynamic = "force-dynamic"
 
@@ -35,7 +36,7 @@ export async function POST(
   const subcategory = await prisma.subcategory.create({
     data: {
       name,
-      slug,
+      slug: generateSlug(slug),
       description,
       categoryId: params.id,
     },
@@ -62,7 +63,7 @@ export async function PUT(
 
   const subcategory = await prisma.subcategory.update({
     where: { id },
-    data: { name, slug, description },
+    data: { name, slug: slug ? generateSlug(slug) : undefined, description },
   })
   revalidateTag(DATA_TAGS.subcategories)
   revalidateTag(DATA_TAGS.categories)

@@ -20,6 +20,15 @@ export function generateSlug(str: string) {
     .replace(/^-+|-+$/g, '')
 }
 
+/**
+ * Builds a /shop URL from stored category/subcategory slugs. Slugs are
+ * normalised so admin-entered values like "Acid/Stone" can't break the route.
+ */
+export function getShopUrl(categorySlug: string, subcategorySlug?: string) {
+  const base = `/shop/${generateSlug(categorySlug)}`
+  return subcategorySlug ? `${base}/${generateSlug(subcategorySlug)}` : base
+}
+
 export function getProductUrl(slugOrName: string) {
   const safeSlug = generateSlug(slugOrName || '')
   return safeSlug ? `/products/${encodeURIComponent(safeSlug)}` : '/shop'
@@ -70,8 +79,10 @@ export function getEffectivePrice(
     // Only apply discount if the parent flash sale is active and within its date range
     if (!isFlashSaleItemActive(item)) continue
 
+    // discountPrice is a ₦ amount off (same as FIXED category/brand discounts)
     if (item.discountPrice != null) {
-      bestFlashDiscount = item.discountPrice
+      const original = product.salePrice ?? product.basePrice
+      bestFlashDiscount = Math.max(0, Math.round((original - item.discountPrice) * 100) / 100)
       break
     }
     if (item.discountPercent != null) {

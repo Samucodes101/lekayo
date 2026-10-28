@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react"
 import Link from "next/link"
+import { usePathname } from "next/navigation"
 import { useSession, signOut } from "next-auth/react"
 import { useCartStore } from "@/stores/cartStore"
 import { useGuestCartStore } from "@/stores/guestCartStore"
@@ -22,7 +23,7 @@ import {
   LayoutDashboard, Package, Megaphone, Users, Terminal, LogOut,
   ChevronDown
 } from "lucide-react"
-import { cn } from "@/lib/utils"
+import { cn, getShopUrl } from "@/lib/utils"
 import Image from "next/image"
 
 interface Category {
@@ -48,13 +49,30 @@ export default function Navbar({ categories = [], brands = [] }: NavbarProps) {
   const { items: cartItems } = useActiveCart()
   const wishlistItems = useWishlistStore((state) => state.items)
   const clearWishlist = useWishlistStore((state) => state.clearWishlist)
+  const pathname = usePathname()
+  const isHome = pathname === "/"
   const [scrolled, setScrolled] = useState(false)
+  const [pastHero, setPastHero] = useState(false)
 
   useEffect(() => {
-    const handleScroll = () => setScrolled(window.scrollY > 20)
-    window.addEventListener("scroll", handleScroll)
+    const handleScroll = () => {
+      setScrolled(window.scrollY > 20)
+      // Hero is full-viewport; switch to the solid bar just before it scrolls away
+      setPastHero(window.scrollY > window.innerHeight - 96)
+    }
+    handleScroll()
+    window.addEventListener("scroll", handleScroll, { passive: true })
     return () => window.removeEventListener("scroll", handleScroll)
   }, [])
+
+  // On the homepage the bar floats transparently over the video hero
+  const onHero = isHome && !pastHero
+  const navText = onHero
+    ? "text-white hover:text-white/70 [text-shadow:0_1px_14px_rgba(0,0,0,0.55)]"
+    : "hover:text-gray-600"
+  const navIcon = onHero
+    ? "text-white hover:bg-white/10 hover:text-white [filter:drop-shadow(0_1px_8px_rgba(0,0,0,0.55))]"
+    : ""
 
   const cartCount = cartItems.reduce((acc, item) => acc + item.quantity, 0)
   const wishlistCount = wishlistItems.length
@@ -84,34 +102,39 @@ export default function Navbar({ categories = [], brands = [] }: NavbarProps) {
   return (
     <header
       className={cn(
-        "sticky top-0 z-50 w-full transition-all duration-300",
-        scrolled ? "bg-white/95 backdrop-blur shadow-sm" : "bg-white"
+        "top-0 z-50 w-full transition-all duration-500",
+        isHome ? "fixed inset-x-0" : "sticky",
+        onHero
+          ? "bg-gradient-to-b from-black/45 via-black/15 to-transparent"
+          : scrolled
+            ? "bg-white/95 backdrop-blur shadow-sm"
+            : "bg-white"
       )}
     >
       <div className="flex h-16 items-center justify-between px-8 lg:px-16">
         {/* Logo */}
         <Link href="/" className="tracking-tight shrink-0">
-          <Image src="/lekayoLogo.png" alt="Lekayo" width={80} height={40} priority />
+          <Image src="/logo.png" alt="Lekayo" width={330} height={84} priority className={cn("h-8 w-auto transition-[filter] duration-500", onHero && "brightness-0 invert drop-shadow-[0_1px_10px_rgba(0,0,0,0.45)]")} />
         </Link>
 
         {/* Desktop Navigation */}
         <nav className="hidden lg:flex items-center gap-8">
-          <Link href="/" className="text-sm font-medium hover:text-gray-600 transition">
+          <Link href="/" className={cn("text-sm font-medium transition", navText)}>
             Home
           </Link>
 
           {/* Shop — wide mega menu, opens on hover */}
           <div className="relative group/shop">
-            <button className="text-sm font-medium hover:text-gray-600 transition flex items-center gap-1 py-6">
+            <button className={cn("text-sm font-medium transition flex items-center gap-1 py-6", navText)}>
               Shop
               <ChevronDown className="h-3 w-3" />
             </button>
             {categories.length > 0 && (
-              <div className="absolute left-1/2 -translate-x-1/2 top-full w-screen max-w-7xl bg-white shadow-xl rounded-lg p-6 grid grid-cols-4 gap-6 border opacity-0 invisible translate-y-1 group-hover/shop:opacity-100 group-hover/shop:visible group-hover/shop:translate-y-0 transition-all duration-150">
+              <div className="absolute left-1/2 -translate-x-1/2 top-full w-screen max-w-7xl bg-white text-gray-900 shadow-xl rounded-lg p-6 grid grid-cols-4 gap-6 border opacity-0 invisible translate-y-1 group-hover/shop:opacity-100 group-hover/shop:visible group-hover/shop:translate-y-0 transition-all duration-150">
                 {categories.map((category) => (
                   <div key={category.id}>
                     <Link
-                      href={`/shop/${category.slug}`}
+                      href={getShopUrl(category.slug)}
                       className="font-semibold text-sm hover:text-gray-600 block mb-2"
                     >
                       {category.name}
@@ -120,7 +143,7 @@ export default function Navbar({ categories = [], brands = [] }: NavbarProps) {
                       {category.subcategories.map((sub) => (
                         <li key={sub.id}>
                           <Link
-                            href={`/shop/${category.slug}/${sub.slug}`}
+                            href={getShopUrl(category.slug, sub.slug)}
                             className="text-sm text-gray-600 hover:text-black transition"
                           >
                             {sub.name}
@@ -136,12 +159,12 @@ export default function Navbar({ categories = [], brands = [] }: NavbarProps) {
 
           {/* Brands — match Shop hover menu */}
           <div className="relative group/brands">
-            <button className="text-sm font-medium hover:text-gray-600 transition flex items-center gap-1 py-6">
+            <button className={cn("text-sm font-medium transition flex items-center gap-1 py-6", navText)}>
               Brands
               <ChevronDown className="h-3 w-3" />
             </button>
             {brands.length > 0 && (
-              <div className="absolute left-0 top-full min-w-[200px] bg-white shadow-xl rounded-lg p-3 border opacity-0 invisible translate-y-1 group-hover/brands:opacity-100 group-hover/brands:visible group-hover/brands:translate-y-0 transition-all duration-150">
+              <div className="absolute left-0 top-full min-w-[200px] bg-white text-gray-900 shadow-xl rounded-lg p-3 border opacity-0 invisible translate-y-1 group-hover/brands:opacity-100 group-hover/brands:visible group-hover/brands:translate-y-0 transition-all duration-150">
                 <ul className="space-y-1">
                   {brands.map((brand) => (
                     <li key={brand.id}>
@@ -165,17 +188,17 @@ export default function Navbar({ categories = [], brands = [] }: NavbarProps) {
             )}
           </div>
 
-          <Link href="/wholesale" className="text-sm font-medium hover:text-gray-600 transition">
+          <Link href="/wholesale" className={cn("text-sm font-medium transition", navText)}>
             Wholesale
           </Link>
         </nav>
 
         {/* Icons & User Menu */}
         <div className="flex items-center gap-3">
-          <Button variant="ghost" size="icon" asChild>
+          <Button variant="ghost" size="icon" asChild className={navIcon}>
             <Link href="/search"><Search className="h-5 w-5" /></Link>
           </Button>
-          <Button variant="ghost" size="icon" asChild className="relative">
+          <Button variant="ghost" size="icon" asChild className={cn("relative", navIcon)}>
             <Link href="/account/wishlist">
               <Heart className="h-5 w-5" />
               {wishlistCount > 0 && (
@@ -185,7 +208,7 @@ export default function Navbar({ categories = [], brands = [] }: NavbarProps) {
               )}
             </Link>
           </Button>
-          <Button variant="ghost" size="icon" asChild className="relative">
+          <Button variant="ghost" size="icon" asChild className={cn("relative", navIcon)}>
             <Link href="/cart">
               <ShoppingBag className="h-5 w-5" />
               {cartCount > 0 && (
@@ -199,7 +222,7 @@ export default function Navbar({ categories = [], brands = [] }: NavbarProps) {
           {session ? (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon">
+                <Button variant="ghost" size="icon" className={navIcon}>
                   <User className="h-5 w-5" />
                 </Button>
               </DropdownMenuTrigger>
@@ -228,7 +251,12 @@ export default function Navbar({ categories = [], brands = [] }: NavbarProps) {
               </DropdownMenuContent>
             </DropdownMenu>
           ) : (
-            <Button asChild variant="outline" size="sm">
+            <Button
+              asChild
+              variant="outline"
+              size="sm"
+              className={cn(onHero && "border-white/60 bg-white/10 text-white backdrop-blur-md hover:bg-white hover:text-black")}
+            >
               <Link href="/login">Sign In</Link>
             </Button>
           )}
@@ -236,7 +264,7 @@ export default function Navbar({ categories = [], brands = [] }: NavbarProps) {
           {/* Mobile Menu */}
           <Sheet>
             <SheetTrigger asChild>
-              <Button variant="ghost" size="icon" className="lg:hidden">
+              <Button variant="ghost" size="icon" className={cn("lg:hidden", navIcon)}>
                 <Menu />
               </Button>
             </SheetTrigger>
@@ -251,11 +279,11 @@ export default function Navbar({ categories = [], brands = [] }: NavbarProps) {
                       <MobileNavLink href="/shop" className="text-sm text-gray-500">All Products</MobileNavLink>
                       {categories.map((cat) => (
                         <MobileAccordion key={cat.id} title={cat.name} nested>
-                          <MobileNavLink href={`/shop/${cat.slug}`} className="text-sm text-gray-500 pl-2">
+                          <MobileNavLink href={getShopUrl(cat.slug)} className="text-sm text-gray-500 pl-2">
                             All {cat.name}
                           </MobileNavLink>
                           {cat.subcategories.map((sub) => (
-                            <MobileNavLink key={sub.id} href={`/shop/${cat.slug}/${sub.slug}`} className="text-sm text-gray-500 pl-2">
+                            <MobileNavLink key={sub.id} href={getShopUrl(cat.slug, sub.slug)} className="text-sm text-gray-500 pl-2">
                               {sub.name}
                             </MobileNavLink>
                           ))}

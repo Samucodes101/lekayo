@@ -1,7 +1,8 @@
 export const dynamic = "force-dynamic"
 
 import { prisma } from "@/lib/db"
-import HeroBanner from "@/components/shared/HeroBanner"
+// import HeroBanner from "@/components/shared/HeroBanner"
+import HeroVideo from "@/components/shared/HeroVideo"
 import ProductGrid from "@/components/shared/ProductGrid"
 import ShopByBrand from "@/components/shared/ShopByBrand"
 import SeasonalCampaign from "@/components/shared/SeasonalCampaign"
@@ -20,7 +21,8 @@ export default async function HomePage() {
   const visibleSections = sections.filter(s => s.visible)
 
   // Fetch data
-  const hero = await prisma.heroBanner.findFirst({ where: { active: true }, orderBy: { order: "asc" } })
+  // CMS-driven hero disabled for now in favour of the static video hero (HeroVideo).
+  // const hero = await prisma.heroBanner.findFirst({ where: { active: true }, orderBy: { order: "asc" } })
   const rawFeatured = await prisma.product.findMany({
     where: { featured: true, status: "PUBLISHED", variants: { some: { isActive: true } } },
     take: 8,
@@ -80,7 +82,8 @@ export default async function HomePage() {
 
   // Map section types to components
   const sectionComponents: Record<string, JSX.Element | null> = {
-    HERO: hero ? <HeroBanner key="hero" {...hero} /> : null,
+    // HERO: hero ? <HeroBanner key="hero" {...hero} /> : null,
+    HERO: null,
     CATEGORIES: categories.length > 0 ? <ShopByCategory key="categories" categories={categories} /> : null,
 
     FEATURED_PRODUCTS: featuredProducts.length > 0 ? (
@@ -111,7 +114,8 @@ export default async function HomePage() {
   if (components.length === 0) {
     return (
       <>
-        {hero && <HeroBanner {...hero} />}
+        <HeroVideo />
+        {/* {hero && <HeroBanner {...hero} />} */}
         {categories.length > 0 && <ShopByCategory categories={categories} />}
         {featuredProducts.length > 0 && (
           <section className="container mx-auto py-12">
@@ -134,5 +138,10 @@ export default async function HomePage() {
     )
   }
 
-  return <>{components}</>
+  return (
+    <>
+      <HeroVideo />
+      {components}
+    </>
+  )
 }

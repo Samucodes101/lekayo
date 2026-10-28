@@ -7,6 +7,7 @@ import FilterSidebar from "@/components/shared/FilterSidebar"
 import SortDropdown from "@/components/shared/SortDropdown"
 import Pagination from "@/components/shared/Pagination"
 import { enrichProductsWithFlashSales } from "@/lib/flashSale"
+import { resolveShopCategory } from "@/lib/shopQueries"
 
 export default async function CategoryPage({
   params,
@@ -15,10 +16,7 @@ export default async function CategoryPage({
   params: { category: string }
   searchParams: { page?: string; sort?: string; brand?: string; minPrice?: string; maxPrice?: string }
 }) {
-  const category = await prisma.category.findUnique({
-    where: { slug: params.category },
-    include: { subcategories: true },
-  })
+  const category = await resolveShopCategory(params.category)
   if (!category) notFound()
 
   const page = Number(searchParams.page) || 1

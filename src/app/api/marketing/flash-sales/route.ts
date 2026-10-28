@@ -33,44 +33,9 @@ async function buildFlashSaleProducts(data: FlashSalePayload) {
     }
   }
 
-  if (data.allProductsDiscount) {
-    const allProducts = await prisma.product.findMany({ select: { id: true } })
-    allProducts.forEach((product) => setDiscount(product.id, data.allProductsDiscount!.discountType, data.allProductsDiscount!.discountValue))
-  }
-
-  if (data.brandDiscounts?.length) {
-    const brandIds = Array.from(new Set(data.brandDiscounts.map((item) => item.brandId)))
-    const brandProducts = await prisma.product.findMany({ where: { brandId: { in: brandIds } }, select: { id: true, brandId: true } })
-    brandProducts.forEach((product) => {
-      const discount = data.brandDiscounts?.find((item) => item.brandId === product.brandId)
-      if (discount) {
-        setDiscount(product.id, discount.discountType, discount.discountValue)
-      }
-    })
-  }
-
-  if (data.categoryDiscounts?.length) {
-    const categoryIds = Array.from(new Set(data.categoryDiscounts.map((item) => item.categoryId)))
-    const categoryProducts = await prisma.product.findMany({ where: { categoryId: { in: categoryIds } }, select: { id: true, categoryId: true } })
-    categoryProducts.forEach((product) => {
-      const discount = data.categoryDiscounts?.find((item) => item.categoryId === product.categoryId)
-      if (discount) {
-        setDiscount(product.id, discount.discountType, discount.discountValue)
-      }
-    })
-  }
-
-  if (data.subcategoryDiscounts?.length) {
-    const subcategoryIds = Array.from(new Set(data.subcategoryDiscounts.map((item) => item.subcategoryId)))
-    const subcategoryProducts = await prisma.product.findMany({ where: { subcategoryId: { in: subcategoryIds } }, select: { id: true, subcategoryId: true } })
-    subcategoryProducts.forEach((product) => {
-      const discount = data.subcategoryDiscounts?.find((item) => item.subcategoryId === product.subcategoryId)
-      if (discount) {
-        setDiscount(product.id, discount.discountType, discount.discountValue)
-      }
-    })
-  }
-
+  // Only explicit product discounts are stored as rows. Category / subcategory /
+  // brand / all-product discounts stay in `criteria` and are resolved at read time
+  // (see resolveDiscount), so they also cover products added after the sale was saved.
   if (data.products?.length) {
     data.products.forEach((item) => {
       if (item.productId) {

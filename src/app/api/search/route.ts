@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/db"
+import { enrichProductsWithFlashSales } from "@/lib/flashSale"
 
 export async function GET(req: NextRequest) {
   const q = req.nextUrl.searchParams.get("q") || ""
@@ -9,5 +10,5 @@ export async function GET(req: NextRequest) {
     take: 10,
     include: { variants: { where: { isActive: true }, include: { images: true } }, brand: true, category: true },
   })
-  return NextResponse.json(products)
+  return NextResponse.json(await enrichProductsWithFlashSales(products))
 }

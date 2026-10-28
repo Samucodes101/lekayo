@@ -48,12 +48,8 @@ export default function FlashSaleForm({ sale, onSave }: { sale?: any; onSave?: (
           name: sale.name ?? "",
           slug: sale.slug ?? "",
           description: sale.description ?? "",
-          startsAt: sale.startsAt
-            ? new Date(sale.startsAt).toISOString().slice(0, 16)
-            : "",
-          endsAt: sale.endsAt
-            ? new Date(sale.endsAt).toISOString().slice(0, 16)
-            : "",
+          startsAt: sale.startsAt ? toLocalInputValue(sale.startsAt) : "",
+          endsAt: sale.endsAt ? toLocalInputValue(sale.endsAt) : "",
           active: sale.active ?? true,
           allProductsDiscount:
             sale.criteria?.allProductsDiscount ?? undefined,
@@ -110,7 +106,14 @@ export default function FlashSaleForm({ sale, onSave }: { sale?: any; onSave?: (
     try {
       const res = await fetch("/api/marketing/flash-sales", {
         method: sale ? "PUT" : "POST",
-        body: JSON.stringify(sale ? { ...data, id: sale.id } : data),
+        body: JSON.stringify({
+          ...data,
+          // datetime-local values carry no timezone; send absolute instants so the
+          // server doesn't reinterpret them in its own timezone
+          startsAt: new Date(data.startsAt).toISOString(),
+          endsAt: new Date(data.endsAt).toISOString(),
+          ...(sale ? { id: sale.id } : {}),
+        }),
         headers: { "Content-Type": "application/json" },
       })
       if (res.ok) {
@@ -186,8 +189,8 @@ export default function FlashSaleForm({ sale, onSave }: { sale?: any; onSave?: (
                         <SelectValue placeholder="Type" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="PERCENTAGE">%</SelectItem>
-                        <SelectItem value="FIXED">₦</SelectItem>
+                        <SelectItem value="PERCENTAGE">% off</SelectItem>
+                        <SelectItem value="FIXED">₦ off</SelectItem>
                       </SelectContent>
                     </Select>
                   </FormControl>
@@ -232,7 +235,7 @@ export default function FlashSaleForm({ sale, onSave }: { sale?: any; onSave?: (
                   <FormItem>
                     <Select onValueChange={field.onChange} defaultValue={field.value}>
                       <FormControl><SelectTrigger><SelectValue placeholder="Type" /></SelectTrigger></FormControl>
-                      <SelectContent><SelectItem value="PERCENTAGE">%</SelectItem><SelectItem value="FIXED">₦</SelectItem></SelectContent>
+                      <SelectContent><SelectItem value="PERCENTAGE">% off</SelectItem><SelectItem value="FIXED">₦ off</SelectItem></SelectContent>
                     </Select>
                     <FormMessage />
                   </FormItem>
@@ -273,7 +276,7 @@ export default function FlashSaleForm({ sale, onSave }: { sale?: any; onSave?: (
                   <FormItem>
                     <Select onValueChange={field.onChange} defaultValue={field.value}>
                       <FormControl><SelectTrigger><SelectValue placeholder="Type" /></SelectTrigger></FormControl>
-                      <SelectContent><SelectItem value="PERCENTAGE">%</SelectItem><SelectItem value="FIXED">₦</SelectItem></SelectContent>
+                      <SelectContent><SelectItem value="PERCENTAGE">% off</SelectItem><SelectItem value="FIXED">₦ off</SelectItem></SelectContent>
                     </Select>
                     <FormMessage />
                   </FormItem>
@@ -317,7 +320,7 @@ export default function FlashSaleForm({ sale, onSave }: { sale?: any; onSave?: (
                   <FormItem>
                     <Select onValueChange={field.onChange} defaultValue={field.value}>
                       <FormControl><SelectTrigger><SelectValue placeholder="Type" /></SelectTrigger></FormControl>
-                      <SelectContent><SelectItem value="PERCENTAGE">%</SelectItem><SelectItem value="FIXED">₦</SelectItem></SelectContent>
+                      <SelectContent><SelectItem value="PERCENTAGE">% off</SelectItem><SelectItem value="FIXED">₦ off</SelectItem></SelectContent>
                     </Select>
                     <FormMessage />
                   </FormItem>
@@ -359,7 +362,7 @@ export default function FlashSaleForm({ sale, onSave }: { sale?: any; onSave?: (
                   <FormItem>
                     <Select onValueChange={field.onChange} defaultValue={field.value}>
                       <FormControl><SelectTrigger><SelectValue placeholder="Type" /></SelectTrigger></FormControl>
-                      <SelectContent><SelectItem value="PERCENTAGE">%</SelectItem><SelectItem value="FIXED">₦</SelectItem></SelectContent>
+                      <SelectContent><SelectItem value="PERCENTAGE">% off</SelectItem><SelectItem value="FIXED">₦ off</SelectItem></SelectContent>
                     </Select>
                     <FormMessage />
                   </FormItem>
@@ -382,4 +385,10 @@ export default function FlashSaleForm({ sale, onSave }: { sale?: any; onSave?: (
       </form>
     </Form>
   )
+}
+
+/** Formats a date as a `datetime-local` input value in the browser's timezone. */
+function toLocalInputValue(value: string | Date) {
+  const date = new Date(value)
+  return new Date(date.getTime() - date.getTimezoneOffset() * 60_000).toISOString().slice(0, 16)
 }

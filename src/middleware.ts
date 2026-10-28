@@ -42,6 +42,7 @@ const guestApi: { prefix: string; methods: string[] }[] = [
   { prefix: "/api/checkout/init", methods: ["POST"] },
   { prefix: "/api/checkout/pay", methods: ["POST"] },
   { prefix: "/api/checkout/order", methods: ["GET"] },
+  { prefix: "/api/wishlist/products", methods: ["POST"] },
 ]
 
 // API routes with no auth check of their own: enforce staff role here

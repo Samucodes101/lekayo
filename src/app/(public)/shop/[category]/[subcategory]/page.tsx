@@ -7,10 +7,11 @@ import FilterSidebar from "@/components/shared/FilterSidebar"
 import SortDropdown from "@/components/shared/SortDropdown"
 import Pagination from "@/components/shared/Pagination"
 import { enrichProductsWithFlashSales } from "@/lib/flashSale"
+import { resolveShopSubcategory } from "@/lib/shopQueries"
 
 export default async function SubcategoryPage({ params, searchParams }: { params: { category: string, subcategory: string }, searchParams: { page?: string; sort?: string; brand?: string; minPrice?: string; maxPrice?: string } }) {
-  const subcategory = await prisma.subcategory.findUnique({ where: { slug: params.subcategory }, include: { category: true } })
-  if (!subcategory || subcategory.category.slug !== params.category) notFound()
+  const subcategory = await resolveShopSubcategory(params.category, params.subcategory)
+  if (!subcategory) notFound()
 
   const page = Number(searchParams.page) || 1
   const limit = 24

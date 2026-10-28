@@ -46,7 +46,7 @@ export default async function RootLayout({
             <Navbar categories={categories} brands={brands} />
           </div>
           <main className="app-main min-h-screen">{children}</main>
-          <Footer />
+          <Footer categories={categories} />
           <Toaster />
           <CommandPalette />
         </Providers>

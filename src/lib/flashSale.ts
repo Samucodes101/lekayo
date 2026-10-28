@@ -101,8 +101,8 @@ function applyDiscount(
     if (entry.discountType === "PERCENTAGE") return base * (1 - entry.discountValue / 100)
     return Math.max(0, base - entry.discountValue)
   }
-  // FlashSaleProduct-style entry
-  if (entry.discountPrice != null) return Math.max(0, entry.discountPrice)
+  // FlashSaleProduct-style entry: discountPrice is a ₦ amount off, matching FIXED criteria
+  if (entry.discountPrice != null) return Math.max(0, base - entry.discountPrice)
   if (entry.discountPercent != null) return base * (1 - entry.discountPercent / 100)
   return base
 }
