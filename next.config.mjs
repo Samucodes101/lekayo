@@ -1,5 +1,10 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  // The production server doesn't have the memory to lint + type-check inside
+  // `next build` (it OOMs). Run `npm run typecheck` and `npm run lint` locally or
+  // in CI before deploying instead.
+  eslint: { ignoreDuringBuilds: true },
+  typescript: { ignoreBuildErrors: true },
   images: {
     remotePatterns: [
       {

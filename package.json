@@ -4,8 +4,9 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
-    "deploy": "prisma generate && prisma migrate deploy && next build",
+    "build": "cross-env NODE_OPTIONS=--max-old-space-size=1536 next build",
+    "deploy": "prisma generate && prisma migrate deploy && npm run build",
+    "typecheck": "tsc --noEmit --incremental false",
     "start": "next start",
     "lint": "next lint",
     "postinstall": "prisma generate",
