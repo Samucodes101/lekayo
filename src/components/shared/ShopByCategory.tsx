@@ -11,8 +11,8 @@ export default function ShopByCategory({ categories }: ShopByCategoryProps) {
   if (!categories.length) return null
 
   return (
-    <section className="container mx-auto py-16">
-      <h2 className="text-3xl font-serif text-center mb-12">Shop by Category</h2>
+    <section className="container mx-auto py-8 md:py-16">
+      <h2 className="text-2xl font-serif text-center mb-6 md:text-3xl md:mb-12">Shop by Category</h2>
       <div className="grid grid-cols-3 gap-4 sm:grid-cols-3 md:grid-cols-3 lg:grid-cols-6 lg:gap-8">
         {categories.map((category) => (
           <Link key={category.id} href={getShopUrl(category.slug)} className="group text-center">

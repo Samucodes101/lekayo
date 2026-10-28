@@ -15,14 +15,8 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
+import { ChevronDown } from "lucide-react";
 import { useActiveCart } from "@/hooks/useActiveCart";
 import { toast } from "@/hooks/use-toast";
 import { type DeliveryState } from "@/lib/deliveryLocations";
@@ -291,20 +285,27 @@ export default function CheckoutForm({
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>State</FormLabel>
-                    <Select value={field.value} onValueChange={field.onChange}>
+                    {/* Native select: the phone's own picker is reliable on iOS,
+                        where the custom Radix popover sometimes ignores taps */}
+                    <div className="relative">
                       <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select state" />
-                        </SelectTrigger>
+                        <select
+                          {...field}
+                          disabled={availableStates.length === 0}
+                          className="flex h-10 w-full appearance-none rounded-md border border-input bg-background py-2 pl-3 pr-9 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                        >
+                          <option value="" disabled>
+                            {availableStates.length === 0 ? "Loading states…" : "Select state"}
+                          </option>
+                          {availableStates.map((st) => (
+                            <option key={st.id} value={st.name}>
+                              {st.name}
+                            </option>
+                          ))}
+                        </select>
                       </FormControl>
-                      <SelectContent>
-                        {availableStates.map((st) => (
-                          <SelectItem key={st.id} value={st.name}>
-                            {st.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                      <ChevronDown className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 opacity-50" />
+                    </div>
                     <FormMessage />
                   </FormItem>
                 )}

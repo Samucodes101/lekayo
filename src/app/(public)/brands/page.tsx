@@ -15,21 +15,25 @@ export default async function BrandsPage() {
         </p>
       </div>
 
-      <div className="grid grid-cols-2 gap-5 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5">
+      <div className="mx-auto grid max-w-5xl grid-cols-3 gap-3 sm:gap-6 lg:gap-8">
         {brands.map((brand) => (
-          <Link
-            key={brand.id}
-            href={`/brands/${brand.slug}`}
-            className="group block rounded-xl border border-gray-200 bg-white p-4 text-center transition hover:-translate-y-0.5 hover:border-gray-300 hover:shadow-sm"
-          >
-            <div className="mb-3 aspect-square overflow-hidden rounded-lg bg-gray-100 p-4 transition group-hover:bg-gray-50">
+          <Link key={brand.id} href={`/brands/${brand.slug}`} className="group block text-center">
+            <div className="relative flex aspect-square items-center justify-center overflow-hidden rounded-sm bg-gray-50 transition-colors duration-300 group-hover:bg-gray-100">
               {brand.logo ? (
-                <Image src={brand.logo} alt={brand.name} width={120} height={120} className="h-full w-full object-contain" />
+                <Image
+                  src={brand.logo}
+                  alt={brand.name}
+                  fill
+                  sizes="(min-width: 1024px) 320px, 33vw"
+                  className="object-contain p-4 transition-transform duration-500 group-hover:scale-105 sm:p-8 lg:p-10"
+                />
               ) : (
-                <span className="flex h-full items-center justify-center text-lg font-bold text-gray-800">{brand.name}</span>
+                <span className="px-2 text-sm font-semibold uppercase tracking-[0.15em] text-gray-800 sm:text-lg">
+                  {brand.name}
+                </span>
               )}
             </div>
-            <h2 className="text-sm font-medium text-gray-800">{brand.name}</h2>
+            <h2 className="mt-2 truncate text-xs font-medium text-gray-800 sm:mt-3 sm:text-sm">{brand.name}</h2>
           </Link>
         ))}
       </div>

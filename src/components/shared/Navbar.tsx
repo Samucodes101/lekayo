@@ -57,8 +57,9 @@ export default function Navbar({ categories = [], brands = [] }: NavbarProps) {
   useEffect(() => {
     const handleScroll = () => {
       setScrolled(window.scrollY > 20)
-      // Hero is full-viewport; switch to the solid bar just before it scrolls away
-      setPastHero(window.scrollY > window.innerHeight - 96)
+      // Switch to the solid bar just before the hero scrolls away (it's half-height on mobile)
+      const heroHeight = document.getElementById("hero")?.offsetHeight ?? window.innerHeight
+      setPastHero(window.scrollY > heroHeight - 96)
     }
     handleScroll()
     window.addEventListener("scroll", handleScroll, { passive: true })
@@ -111,10 +112,10 @@ export default function Navbar({ categories = [], brands = [] }: NavbarProps) {
             : "bg-white"
       )}
     >
-      <div className="flex h-16 items-center justify-between px-8 lg:px-16">
+      <div className="flex h-16 items-center justify-between gap-2 px-4 sm:px-8 lg:px-16">
         {/* Logo */}
         <Link href="/" className="tracking-tight shrink-0">
-          <Image src="/logo.png" alt="Lekayo" width={330} height={84} priority className={cn("h-8 w-auto transition-[filter] duration-500", onHero && "brightness-0 invert drop-shadow-[0_1px_10px_rgba(0,0,0,0.45)]")} />
+          <Image src="/logo.png" alt="Lekayo" width={330} height={84} priority className={cn("h-6 w-auto transition-[filter] sm:h-8 duration-500", onHero && "brightness-0 invert drop-shadow-[0_1px_10px_rgba(0,0,0,0.45)]")} />
         </Link>
 
         {/* Desktop Navigation */}
@@ -194,11 +195,11 @@ export default function Navbar({ categories = [], brands = [] }: NavbarProps) {
         </nav>
 
         {/* Icons & User Menu */}
-        <div className="flex items-center gap-3">
+        <div className="flex shrink-0 items-center gap-0.5 sm:gap-3">
           <Button variant="ghost" size="icon" asChild className={navIcon}>
             <Link href="/search"><Search className="h-5 w-5" /></Link>
           </Button>
-          <Button variant="ghost" size="icon" asChild className={cn("relative", navIcon)}>
+          <Button variant="ghost" size="icon" asChild className={cn("relative hidden sm:inline-flex", navIcon)}>
             <Link href="/account/wishlist">
               <Heart className="h-5 w-5" />
               {wishlistCount > 0 && (
@@ -255,7 +256,7 @@ export default function Navbar({ categories = [], brands = [] }: NavbarProps) {
               asChild
               variant="outline"
               size="sm"
-              className={cn(onHero && "border-white/60 bg-white/10 text-white backdrop-blur-md hover:bg-white hover:text-black")}
+              className={cn("hidden sm:inline-flex", onHero && "border-white/60 bg-white/10 text-white backdrop-blur-md hover:bg-white hover:text-black")}
             >
               <Link href="/login">Sign In</Link>
             </Button>
@@ -268,7 +269,7 @@ export default function Navbar({ categories = [], brands = [] }: NavbarProps) {
                 <Menu />
               </Button>
             </SheetTrigger>
-            <SheetContent>
+            <SheetContent className="w-[85vw] max-w-sm overflow-y-auto">
               <nav className="flex flex-col gap-1 mt-8">
                 <MobileNavLink href="/">Home</MobileNavLink>
 
@@ -312,6 +313,9 @@ export default function Navbar({ categories = [], brands = [] }: NavbarProps) {
                 )}
 
                 <MobileNavLink href="/wholesale">Wholesale</MobileNavLink>
+                <MobileNavLink href="/account/wishlist">
+                  Wishlist{wishlistCount > 0 && <span className="ml-2 text-sm text-gray-500">({wishlistCount})</span>}
+                </MobileNavLink>
                 {dashboardLink && (
                   <MobileNavLink href={dashboardLink.href}>
                     <span className="flex items-center gap-2">
