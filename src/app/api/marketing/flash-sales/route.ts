@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/db"
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth"
-import type { FlashSaleCriteria } from "@/lib/flashSale"
+import { isFlashSaleActive, type FlashSaleCriteria } from "@/lib/flashSale"
 
 // Flash sales are percentage-only: every discount is `discountValue`% off the naira price.
 type PercentDiscount = { discountType: "PERCENTAGE"; discountValue: number }
@@ -78,12 +78,31 @@ export async function GET() {
     orderBy: { createdAt: "desc" },
   })
 
+  // How many published products each sale reaches — shown in the admin list so
+  // a sale that's "live" but targets nothing is obvious.
+  const countReach = (criteria: FlashSaleCriteria, productIds: string[]) => {
+    if (criteria.allProductsDiscount) return prisma.product.count({ where: { status: "PUBLISHED" } })
+    const or = [
+      productIds.length ? { id: { in: productIds } } : null,
+      criteria.categoryDiscounts?.length ? { categoryId: { in: criteria.categoryDiscounts.map((d) => d.categoryId) } } : null,
+      criteria.subcategoryDiscounts?.length ? { subcategoryId: { in: criteria.subcategoryDiscounts.map((d) => d.subcategoryId) } } : null,
+      criteria.brandDiscounts?.length ? { brandId: { in: criteria.brandDiscounts.map((d) => d.brandId) } } : null,
+    ].filter((clause): clause is NonNullable<typeof clause> => clause !== null)
+    return or.length ? prisma.product.count({ where: { status: "PUBLISHED", OR: or } }) : Promise.resolve(0)
+  }
+  const reach = await Promise.all(
+    sales.map((sale) =>
+      countReach((sale.criteria ?? {}) as FlashSaleCriteria, sale.products.filter((p) => p.discountPercent != null).map((p) => p.productId)),
+    ),
+  )
+  const serverNow = new Date().toISOString()
+
   // Product-level discounts come from FlashSaleProduct rows; everything else
   // lives in criteria. Older sales also stored a row for every product their
   // category / brand / all-products rule covered — hide those duplicates so
   // the edit form only shows discounts that were set on individual products.
   return NextResponse.json(
-    sales.map(({ products, ...sale }) => {
+    sales.map(({ products, ...sale }, index) => {
       const criteria = (sale.criteria ?? {}) as FlashSaleCriteria
       const coveredByCriteria = (row: (typeof products)[number]) => {
         const pct = row.discountPercent
@@ -101,6 +120,10 @@ export async function GET() {
       return {
         ...sale,
         criteria,
+        // Same check the storefront uses, evaluated on the server's clock
+        liveOnServer: isFlashSaleActive(sale),
+        serverNow,
+        productsReached: reach[index],
         products: products
           .filter((row) => row.discountPercent != null && !coveredByCriteria(row))
           .map((row) => ({

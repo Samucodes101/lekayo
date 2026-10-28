@@ -25,9 +25,10 @@ const navItems = [
   { name: "Settings", href: "/admin/settings", icon: Settings },
 ]
 
-export default function AdminSidebar() {
+export default function AdminSidebar({ role }: { role?: string }) {
   const pathname = usePathname()
-  const links = navItems.map((item) => (
+  const visibleItems = role === "MARKETING_MANAGER" ? navItems.filter((item) => item.href === "/admin/marketing") : navItems
+  const links = visibleItems.map((item) => (
     <Link key={item.href} href={item.href} className={cn("flex min-h-11 items-center gap-3 px-4 py-2 text-sm hover:bg-gray-100", pathname === item.href && "bg-gray-100 font-medium")}>
       <item.icon className="h-4 w-4" />
       {item.name}

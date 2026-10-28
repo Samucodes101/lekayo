@@ -112,10 +112,15 @@ export default withAuth(
     if (matches(path, "/api/dev") && role !== "DEVELOPER" && role !== "SUPER_ADMIN") {
       return deny(403)
     }
+    if (matches(path, "/api/marketing") && !["SUPER_ADMIN", "ADMIN", "MARKETING_MANAGER"].includes(role)) {
+      return deny(403)
+    }
 
     // 5. Page role checks
     if (path.startsWith("/admin")) {
-      if (role !== "SUPER_ADMIN" && role !== "ADMIN") return toHome()
+      // Marketing managers may use the marketing section only
+      const marketingOnly = role === "MARKETING_MANAGER" && matches(path, "/admin/marketing")
+      if (role !== "SUPER_ADMIN" && role !== "ADMIN" && !marketingOnly) return toHome()
     }
     if (path.startsWith("/cs")) {
       if (!STAFF.includes(role)) return toHome()

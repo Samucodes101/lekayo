@@ -25,6 +25,11 @@ type SaleStatus = "Live" | "Scheduled" | "Ended" | "Inactive"
 
 function getStatus(sale: any): SaleStatus {
   if (!sale.active) return "Inactive"
+  // Use the server's verdict when available — it's what the storefront uses
+  if (typeof sale.liveOnServer === "boolean") {
+    if (sale.liveOnServer) return "Live"
+    return new Date(sale.startsAt) > new Date(sale.serverNow) ? "Scheduled" : "Ended"
+  }
   const now = new Date()
   if (new Date(sale.startsAt) > now) return "Scheduled"
   if (new Date(sale.endsAt) < now) return "Ended"
@@ -173,7 +178,14 @@ export default function FlashSalesPage() {
               return (
                 <TableRow key={s.id} className={cn(!s.active && "opacity-60")}>
                   <TableCell className="font-medium">{s.name}</TableCell>
-                  <TableCell className="text-sm text-gray-600">{describeDiscounts(s)}</TableCell>
+                  <TableCell className="text-sm text-gray-600">
+                    {describeDiscounts(s)}
+                    {typeof s.productsReached === "number" && (
+                      <span className={cn("block text-xs", s.productsReached === 0 ? "text-red-600" : "text-gray-400")}>
+                        Applies to {s.productsReached} published product{s.productsReached === 1 ? "" : "s"}
+                      </span>
+                    )}
+                  </TableCell>
                   <TableCell className="text-sm whitespace-nowrap">
                     {format(new Date(s.startsAt), "dd/MM/yyyy HH:mm")} – {format(new Date(s.endsAt), "dd/MM/yyyy HH:mm")}
                   </TableCell>
