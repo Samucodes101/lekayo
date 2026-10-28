@@ -41,6 +41,8 @@ export async function PUT(req: NextRequest) {
   const session = await getServerSession(authOptions);
   if (!session)
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  if (!["SUPER_ADMIN", "ADMIN"].includes(session.user.role as string))
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   const data = await req.json();
   await prisma.$transaction(
     Object.entries(data).map(([key, value]) =>

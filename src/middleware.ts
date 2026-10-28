@@ -34,6 +34,7 @@ const guestApi: { prefix: string; methods: string[] }[] = [
   { prefix: "/api/sizes", methods: ["GET"] },
   { prefix: "/api/products", methods: ["GET"] },
   { prefix: "/api/search", methods: ["GET"] },
+  { prefix: "/api/settings", methods: ["GET"] }, // checkout needs the delivery states
   { prefix: "/api/cms", methods: ["GET"] },
   { prefix: "/api/contact", methods: ["POST"] },
   { prefix: "/api/newsletter", methods: ["POST"] },
