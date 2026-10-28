@@ -55,8 +55,8 @@ export default function HeroVideo() {
   }
 
   return (
-    // Mobile: half-screen banner so the categories below are visible on load
-    <section id="hero" className="relative h-[50svh] min-h-[340px] w-full overflow-hidden bg-neutral-950 md:h-[100svh] md:min-h-[560px]">
+    // Mobile: fills the screen minus ~15rem, leaving room for the first row of categories
+    <section id="hero" className="relative h-[calc(100svh-15rem)] min-h-[340px] w-full overflow-hidden bg-neutral-950 md:h-[100svh] md:min-h-[560px]">
       <Image
         src={POSTER}
         alt=""
@@ -102,8 +102,8 @@ export default function HeroVideo() {
             <span className="font-light text-white/60">made for you.</span>
           </h1>
 
-          <p className="mt-6 hidden max-w-md text-base font-light text-white/75 sm:text-lg md:block animate-[fadeUp_0.8s_ease-out_0.2s_backwards]">
-            Curated fits and accessories from the brands you love — delivered across Nigeria.
+          <p className="mx-auto mt-3 max-w-xs text-sm font-light text-white/75 sm:max-w-md sm:text-base md:mx-0 md:mt-6 md:text-lg animate-[fadeUp_0.8s_ease-out_0.2s_backwards]">
+            Curated fits and accessories from the brands you love,  delivered across Nigeria.
           </p>
 
           <div className="mt-5 flex flex-wrap items-center justify-center gap-4 md:mt-8 md:justify-start animate-[fadeUp_0.8s_ease-out_0.3s_backwards]">
