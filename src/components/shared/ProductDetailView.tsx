@@ -50,12 +50,17 @@ export default function ProductDetailView({ product, onAdded }: ProductDetailVie
     setQuantity(1)
   }, [selectedVariant])
 
-  const resolvedFlash = (product as any)._flashSaleResolved
+  // Prefer the sale resolved for the selected variant (variants may have their own price)
+  const flashByVariant = (product as any)._flashSaleByVariant as Record<string, any> | undefined
+  const resolvedFlash =
+    selectedVariant && flashByVariant && selectedVariant.id in flashByVariant
+      ? flashByVariant[selectedVariant.id]
+      : (product as any)._flashSaleResolved
   const flashAdjusted = { ...product, flashSaleItems: (product as any).flashSaleItems, flashSaleItem: (product as any).flashSaleItem }
   const isOnFlashSale = resolvedFlash ? resolvedFlash.discountSaved > 0 : hasFlashSaleDiscount(flashAdjusted)
   const variantPrice = selectedVariant?.price
   const price = resolvedFlash?.finalPrice ?? variantPrice ?? getEffectivePrice(flashAdjusted)
-  const originalPrice = resolvedFlash?.originalPrice ?? product.basePrice
+  const originalPrice = resolvedFlash?.originalPrice ?? variantPrice ?? product.basePrice
   const showDiscount = price < originalPrice
 
   const sortedImages = [...(selectedVariant?.images || [])].sort((a: any, b: any) => (a.order ?? 0) - (b.order ?? 0))

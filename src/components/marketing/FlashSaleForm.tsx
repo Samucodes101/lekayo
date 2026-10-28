@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { forwardRef, useState, useEffect } from "react"
 import { useForm, useFieldArray } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { z } from "zod"
@@ -13,9 +13,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { toast } from "@/hooks/use-toast"
 import { useRouter } from "next/navigation"
 
+// Flash sales are percentage-only: the value is % off the naira price
 const discountSchema = z.object({
-  discountType: z.enum(["PERCENTAGE", "FIXED"]),
-  discountValue: z.number().positive(),
+  discountType: z.literal("PERCENTAGE"),
+  discountValue: z.number().gt(0, "Enter a % above 0").max(100, "Can't be more than 100%"),
 })
 
 const flashSaleSchema = z.object({
@@ -51,12 +52,13 @@ export default function FlashSaleForm({ sale, onSave }: { sale?: any; onSave?: (
           startsAt: sale.startsAt ? toLocalInputValue(sale.startsAt) : "",
           endsAt: sale.endsAt ? toLocalInputValue(sale.endsAt) : "",
           active: sale.active ?? true,
-          allProductsDiscount:
-            sale.criteria?.allProductsDiscount ?? undefined,
-          products: sale.products ?? [],
-          categoryDiscounts: sale.criteria?.categoryDiscounts ?? [],
-          subcategoryDiscounts: sale.criteria?.subcategoryDiscounts ?? [],
-          brandDiscounts: sale.criteria?.brandDiscounts ?? [],
+          allProductsDiscount: sale.criteria?.allProductsDiscount
+            ? asPercent(sale.criteria.allProductsDiscount)
+            : undefined,
+          products: (sale.products ?? []).map(asPercent),
+          categoryDiscounts: (sale.criteria?.categoryDiscounts ?? []).map(asPercent),
+          subcategoryDiscounts: (sale.criteria?.subcategoryDiscounts ?? []).map(asPercent),
+          brandDiscounts: (sale.criteria?.brandDiscounts ?? []).map(asPercent),
         }
       : {
           active: true,
@@ -179,29 +181,12 @@ export default function FlashSaleForm({ sale, onSave }: { sale?: any; onSave?: (
             </Button>
           </div>
           {allProductsDiscount ? (
-            <div className="grid grid-cols-3 gap-2">
-              <FormField control={form.control} name="allProductsDiscount.discountType" render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Type</FormLabel>
-                  <FormControl>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Type" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="PERCENTAGE">% off</SelectItem>
-                        <SelectItem value="FIXED">₦ off</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )} />
+            <div className="max-w-[200px]">
               <FormField control={form.control} name="allProductsDiscount.discountValue" render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Value</FormLabel>
+                  <FormLabel>Discount</FormLabel>
                   <FormControl>
-                    <Input type="number" step="0.01" placeholder="Value" {...field} onChange={(e) => field.onChange(Number(e.target.value))} />
+                    <PercentInput {...field} onChange={(e) => field.onChange(Number(e.target.value))} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -219,7 +204,7 @@ export default function FlashSaleForm({ sale, onSave }: { sale?: any; onSave?: (
                 <span className="font-medium">Product #{idx + 1}</span>
                 <Button type="button" variant="destructive" size="sm" onClick={() => removeProduct(idx)}>Remove</Button>
               </div>
-              <div className="grid grid-cols-3 gap-2">
+              <div className="grid grid-cols-[1fr_140px] gap-2">
                 <FormField control={form.control} name={`products.${idx}.productId`} render={({ field }) => (
                   <FormItem>
                     <Select onValueChange={field.onChange} defaultValue={field.value}>
@@ -231,17 +216,8 @@ export default function FlashSaleForm({ sale, onSave }: { sale?: any; onSave?: (
                     <FormMessage />
                   </FormItem>
                 )} />
-                <FormField control={form.control} name={`products.${idx}.discountType`} render={({ field }) => (
-                  <FormItem>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                      <FormControl><SelectTrigger><SelectValue placeholder="Type" /></SelectTrigger></FormControl>
-                      <SelectContent><SelectItem value="PERCENTAGE">% off</SelectItem><SelectItem value="FIXED">₦ off</SelectItem></SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )} />
                 <FormField control={form.control} name={`products.${idx}.discountValue`} render={({ field }) => (
-                  <FormItem><FormControl><Input type="number" step="0.01" placeholder="Value" {...field} onChange={e => field.onChange(Number(e.target.value))} /></FormControl><FormMessage /></FormItem>
+                  <FormItem><FormControl><PercentInput {...field} onChange={(e) => field.onChange(Number(e.target.value))} /></FormControl><FormMessage /></FormItem>
                 )} />
               </div>
             </div>
@@ -260,7 +236,7 @@ export default function FlashSaleForm({ sale, onSave }: { sale?: any; onSave?: (
                 <span className="font-medium">Category #{idx + 1}</span>
                 <Button type="button" variant="destructive" size="sm" onClick={() => removeCategory(idx)}>Remove</Button>
               </div>
-              <div className="grid grid-cols-3 gap-2">
+              <div className="grid grid-cols-[1fr_140px] gap-2">
                 <FormField control={form.control} name={`categoryDiscounts.${idx}.categoryId`} render={({ field }) => (
                   <FormItem>
                     <Select onValueChange={field.onChange} defaultValue={field.value}>
@@ -272,17 +248,8 @@ export default function FlashSaleForm({ sale, onSave }: { sale?: any; onSave?: (
                     <FormMessage />
                   </FormItem>
                 )} />
-                <FormField control={form.control} name={`categoryDiscounts.${idx}.discountType`} render={({ field }) => (
-                  <FormItem>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                      <FormControl><SelectTrigger><SelectValue placeholder="Type" /></SelectTrigger></FormControl>
-                      <SelectContent><SelectItem value="PERCENTAGE">% off</SelectItem><SelectItem value="FIXED">₦ off</SelectItem></SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )} />
                 <FormField control={form.control} name={`categoryDiscounts.${idx}.discountValue`} render={({ field }) => (
-                  <FormItem><FormControl><Input type="number" step="0.01" placeholder="Value" {...field} onChange={e => field.onChange(Number(e.target.value))} /></FormControl><FormMessage /></FormItem>
+                  <FormItem><FormControl><PercentInput {...field} onChange={(e) => field.onChange(Number(e.target.value))} /></FormControl><FormMessage /></FormItem>
                 )} />
               </div>
             </div>
@@ -300,7 +267,7 @@ export default function FlashSaleForm({ sale, onSave }: { sale?: any; onSave?: (
                 <span className="font-medium">Subcategory #{idx + 1}</span>
                 <Button type="button" variant="destructive" size="sm" onClick={() => removeSubcategory(idx)}>Remove</Button>
               </div>
-              <div className="grid grid-cols-3 gap-2">
+              <div className="grid grid-cols-[1fr_140px] gap-2">
                 <FormField control={form.control} name={`subcategoryDiscounts.${idx}.subcategoryId`} render={({ field }) => (
                   <FormItem>
                     <Select onValueChange={field.onChange} defaultValue={field.value}>
@@ -316,17 +283,8 @@ export default function FlashSaleForm({ sale, onSave }: { sale?: any; onSave?: (
                     <FormMessage />
                   </FormItem>
                 )} />
-                <FormField control={form.control} name={`subcategoryDiscounts.${idx}.discountType`} render={({ field }) => (
-                  <FormItem>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                      <FormControl><SelectTrigger><SelectValue placeholder="Type" /></SelectTrigger></FormControl>
-                      <SelectContent><SelectItem value="PERCENTAGE">% off</SelectItem><SelectItem value="FIXED">₦ off</SelectItem></SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )} />
                 <FormField control={form.control} name={`subcategoryDiscounts.${idx}.discountValue`} render={({ field }) => (
-                  <FormItem><FormControl><Input type="number" step="0.01" placeholder="Value" {...field} onChange={e => field.onChange(Number(e.target.value))} /></FormControl><FormMessage /></FormItem>
+                  <FormItem><FormControl><PercentInput {...field} onChange={(e) => field.onChange(Number(e.target.value))} /></FormControl><FormMessage /></FormItem>
                 )} />
               </div>
             </div>
@@ -344,7 +302,7 @@ export default function FlashSaleForm({ sale, onSave }: { sale?: any; onSave?: (
                 <span className="font-medium">Brand #{idx + 1}</span>
                 <Button type="button" variant="destructive" size="sm" onClick={() => removeBrand(idx)}>Remove</Button>
               </div>
-              <div className="grid grid-cols-3 gap-2">
+              <div className="grid grid-cols-[1fr_140px] gap-2">
                 <FormField control={form.control} name={`brandDiscounts.${idx}.brandId`} render={({ field }) => (
                   <FormItem>
                     <Select onValueChange={field.onChange} defaultValue={field.value}>
@@ -358,17 +316,8 @@ export default function FlashSaleForm({ sale, onSave }: { sale?: any; onSave?: (
                     <FormMessage />
                   </FormItem>
                 )} />
-                <FormField control={form.control} name={`brandDiscounts.${idx}.discountType`} render={({ field }) => (
-                  <FormItem>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                      <FormControl><SelectTrigger><SelectValue placeholder="Type" /></SelectTrigger></FormControl>
-                      <SelectContent><SelectItem value="PERCENTAGE">% off</SelectItem><SelectItem value="FIXED">₦ off</SelectItem></SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )} />
                 <FormField control={form.control} name={`brandDiscounts.${idx}.discountValue`} render={({ field }) => (
-                  <FormItem><FormControl><Input type="number" step="0.01" placeholder="Value" {...field} onChange={e => field.onChange(Number(e.target.value))} /></FormControl><FormMessage /></FormItem>
+                  <FormItem><FormControl><PercentInput {...field} onChange={(e) => field.onChange(Number(e.target.value))} /></FormControl><FormMessage /></FormItem>
                 )} />
               </div>
             </div>
@@ -392,3 +341,17 @@ function toLocalInputValue(value: string | Date) {
   const date = new Date(value)
   return new Date(date.getTime() - date.getTimezoneOffset() * 60_000).toISOString().slice(0, 16)
 }
+
+/** Older sales could store ₦ amounts; load everything as a percentage (values over 100 fail validation visibly). */
+function asPercent<T extends { discountValue: number }>(entry: T) {
+  return { ...entry, discountType: "PERCENTAGE" as const }
+}
+
+const PercentInput = forwardRef<HTMLInputElement, React.ComponentProps<typeof Input>>(function PercentInput(props, ref) {
+  return (
+    <div className="relative">
+      <Input ref={ref} type="number" min={1} max={100} step="0.5" placeholder="e.g. 20" className="pr-14" {...props} />
+      <span className="pointer-events-none absolute inset-y-0 right-3 flex items-center text-sm text-muted-foreground">% off</span>
+    </div>
+  )
+})

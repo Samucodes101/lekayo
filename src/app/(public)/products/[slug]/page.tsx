@@ -22,6 +22,14 @@ export default async function ProductPage({ params }: { params: { slug: string }
 
   const activeSales = await fetchActiveFlashSales()
   const flashResolved = resolveCheckoutPrice(product, null, activeSales)
+  // Variants can carry their own price, so resolve the sale per variant too —
+  // the same way checkout prices them.
+  const flashByVariant = Object.fromEntries(
+    product.variants.map((variant) => {
+      const resolved = resolveCheckoutPrice(product, variant, activeSales)
+      return [variant.id, resolved.finalPrice < resolved.originalPrice ? resolved : null]
+    }),
+  )
 
   const rawRelated = await prisma.product.findMany({
     where: { categoryId: product.categoryId, id: { not: product.id }, status: "PUBLISHED", variants: { some: { isActive: true } } },
@@ -43,6 +51,7 @@ export default async function ProductPage({ params }: { params: { slug: string }
         product={{
           ...product,
           _flashSaleResolved: flashResolved.finalPrice < flashResolved.originalPrice ? flashResolved : null,
+          _flashSaleByVariant: flashByVariant,
         }}
         related={related}
       />

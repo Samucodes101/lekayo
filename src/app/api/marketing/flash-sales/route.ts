@@ -2,8 +2,10 @@ import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/db"
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth"
+import type { FlashSaleCriteria } from "@/lib/flashSale"
 
-type DiscountType = "PERCENTAGE" | "FIXED"
+// Flash sales are percentage-only: every discount is `discountValue`% off the naira price.
+type PercentDiscount = { discountType: "PERCENTAGE"; discountValue: number }
 
 type FlashSalePayload = {
   name: string
@@ -12,88 +14,121 @@ type FlashSalePayload = {
   startsAt: string
   endsAt: string
   active: boolean
-  allProductsDiscount?: { discountType: DiscountType; discountValue: number }
-  products?: Array<{ productId: string; discountType: DiscountType; discountValue: number }>
-  categoryDiscounts?: Array<{ categoryId: string; discountType: DiscountType; discountValue: number }>
-  subcategoryDiscounts?: Array<{ subcategoryId: string; discountType: DiscountType; discountValue: number }>
-  brandDiscounts?: Array<{ brandId: string; discountType: DiscountType; discountValue: number }>
+  allProductsDiscount?: PercentDiscount | null
+  products?: Array<PercentDiscount & { productId: string }>
+  categoryDiscounts?: Array<PercentDiscount & { categoryId: string }>
+  subcategoryDiscounts?: Array<PercentDiscount & { subcategoryId: string }>
+  brandDiscounts?: Array<PercentDiscount & { brandId: string }>
 }
 
-type ProductDiscountInput = { productId: string; discountPercent?: number | null; discountPrice?: number | null }
+const MANAGER_ROLES = ["SUPER_ADMIN", "ADMIN", "MARKETING_MANAGER"]
 
-async function buildFlashSaleProducts(data: FlashSalePayload) {
-  const productMap = new Map<string, ProductDiscountInput>()
-
-  const setDiscount = (productId: string, discountType: DiscountType, discountValue: number) => {
-    if (!productId || discountValue == null) return
-    if (discountType === "PERCENTAGE") {
-      productMap.set(productId, { productId, discountPercent: discountValue, discountPrice: null })
-    } else {
-      productMap.set(productId, { productId, discountPercent: null, discountPrice: discountValue })
-    }
+async function requireManager() {
+  const session = await getServerSession(authOptions)
+  if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+  if (!MANAGER_ROLES.includes(session.user.role as string)) {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 })
   }
+  return null
+}
 
-  // Only explicit product discounts are stored as rows. Category / subcategory /
-  // brand / all-product discounts stay in `criteria` and are resolved at read time
-  // (see resolveDiscount), so they also cover products added after the sale was saved.
-  if (data.products?.length) {
-    data.products.forEach((item) => {
-      if (item.productId) {
-        setDiscount(item.productId, item.discountType, item.discountValue)
-      }
-    })
+const isValidPercent = (value: unknown): value is number =>
+  typeof value === "number" && Number.isFinite(value) && value > 0 && value <= 100
+
+/** Keeps only valid percentage entries, normalising the shape stored in criteria. */
+function cleanPercentEntries<T extends { discountValue: number }>(entries: T[] | undefined, idKey: keyof T) {
+  return (entries ?? [])
+    .filter((entry) => entry[idKey] && isValidPercent(entry.discountValue))
+    .map((entry) => ({ ...entry, discountType: "PERCENTAGE" as const }))
+}
+
+function buildCriteria(data: FlashSalePayload): FlashSaleCriteria {
+  return {
+    allProductsDiscount:
+      data.allProductsDiscount && isValidPercent(data.allProductsDiscount.discountValue)
+        ? { discountType: "PERCENTAGE", discountValue: data.allProductsDiscount.discountValue }
+        : null,
+    categoryDiscounts: cleanPercentEntries(data.categoryDiscounts, "categoryId"),
+    subcategoryDiscounts: cleanPercentEntries(data.subcategoryDiscounts, "subcategoryId"),
+    brandDiscounts: cleanPercentEntries(data.brandDiscounts, "brandId"),
   }
+}
 
-  return Array.from(productMap.values()).filter((entry) => entry.discountPercent != null || entry.discountPrice != null)
+// Only explicit product discounts are stored as rows. Category / subcategory /
+// brand / all-product discounts stay in `criteria` and are resolved at read time
+// (see resolveDiscount), so they also cover products added after the sale was saved.
+function buildFlashSaleProducts(data: FlashSalePayload) {
+  const byProduct = new Map<string, { productId: string; discountPercent: number; discountPrice: null }>()
+  for (const item of cleanPercentEntries(data.products, "productId")) {
+    byProduct.set(item.productId, { productId: item.productId, discountPercent: item.discountValue, discountPrice: null })
+  }
+  return Array.from(byProduct.values())
 }
 
 export async function GET() {
+  const denied = await requireManager()
+  if (denied) return denied
+
   const sales = await prisma.flashSale.findMany({
     include: {
-      products: { include: { product: true } },
+      products: {
+        include: { product: { select: { categoryId: true, subcategoryId: true, brandId: true } } },
+      },
     },
     orderBy: { createdAt: "desc" },
   })
 
-  // Map the response so the form receives the expected shape.
-  // Product-level discounts come from FlashSaleProduct rows (relation);
-  // category / subcategory / brand / all-product discounts live in criteria JSON.
+  // Product-level discounts come from FlashSaleProduct rows; everything else
+  // lives in criteria. Older sales also stored a row for every product their
+  // category / brand / all-products rule covered — hide those duplicates so
+  // the edit form only shows discounts that were set on individual products.
   return NextResponse.json(
-    sales.map((sale) => ({
-      ...sale,
-      criteria: sale.criteria ?? {},
-      // Synthesise a form-compatible `products` array from FlashSaleProduct rows
-      products: sale.products.map((p) => ({
-        productId: p.productId,
-        discountType: p.discountPercent != null ? ("PERCENTAGE" as const) : ("FIXED" as const),
-        discountValue: p.discountPercent ?? p.discountPrice ?? 0,
-      })),
-    })),
+    sales.map(({ products, ...sale }) => {
+      const criteria = (sale.criteria ?? {}) as FlashSaleCriteria
+      const coveredByCriteria = (row: (typeof products)[number]) => {
+        const pct = row.discountPercent
+        if (pct == null) return false
+        const { categoryId, subcategoryId, brandId } = row.product
+        return (
+          criteria.allProductsDiscount?.discountValue === pct ||
+          criteria.categoryDiscounts?.some((d) => d.categoryId === categoryId && d.discountValue === pct) ||
+          criteria.subcategoryDiscounts?.some((d) => d.subcategoryId === subcategoryId && d.discountValue === pct) ||
+          criteria.brandDiscounts?.some((d) => d.brandId === brandId && d.discountValue === pct) ||
+          false
+        )
+      }
+
+      return {
+        ...sale,
+        criteria,
+        products: products
+          .filter((row) => row.discountPercent != null && !coveredByCriteria(row))
+          .map((row) => ({
+            productId: row.productId,
+            discountType: "PERCENTAGE" as const,
+            discountValue: row.discountPercent!,
+          })),
+      }
+    }),
   )
 }
 
 export async function POST(req: NextRequest) {
-  const session = await getServerSession(authOptions)
-  if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-  const data = (await req.json()) as FlashSalePayload
-  const { allProductsDiscount, products, categoryDiscounts, subcategoryDiscounts, brandDiscounts, ...saleFields } = data
+  const denied = await requireManager()
+  if (denied) return denied
 
-  const flashSaleProducts = await buildFlashSaleProducts(data)
+  const data = (await req.json()) as FlashSalePayload
 
   const sale = await prisma.flashSale.create({
     data: {
-      ...saleFields,
-      criteria: {
-        allProductsDiscount: data.allProductsDiscount,
-        categoryDiscounts: data.categoryDiscounts,
-        subcategoryDiscounts: data.subcategoryDiscounts,
-        brandDiscounts: data.brandDiscounts,
-      },
+      name: data.name,
+      slug: data.slug,
+      description: data.description,
+      active: data.active,
+      criteria: buildCriteria(data),
       startsAt: new Date(data.startsAt),
       endsAt: new Date(data.endsAt),
-      products: {
-        create: flashSaleProducts,
-      },
+      products: { create: buildFlashSaleProducts(data) },
     },
     include: { products: true },
   })
@@ -101,31 +136,53 @@ export async function POST(req: NextRequest) {
 }
 
 export async function PUT(req: NextRequest) {
-  const session = await getServerSession(authOptions)
-  if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-  const { id, allProductsDiscount, products, categoryDiscounts, subcategoryDiscounts, brandDiscounts, ...data } =
-    (await req.json()) as FlashSalePayload & { id: string }
-  const flashSaleProducts = await buildFlashSaleProducts({ allProductsDiscount, products, categoryDiscounts, subcategoryDiscounts, brandDiscounts, ...data } as FlashSalePayload)
+  const denied = await requireManager()
+  if (denied) return denied
 
-  await prisma.flashSaleProduct.deleteMany({ where: { flashSaleId: id } })
+  const { id, ...data } = (await req.json()) as FlashSalePayload & { id: string }
+  if (!id) return NextResponse.json({ error: "Flash sale ID is required" }, { status: 400 })
 
-  const sale = await prisma.flashSale.update({
-    where: { id },
-    data: {
-      ...data,
-      criteria: {
-        allProductsDiscount: allProductsDiscount,
-        categoryDiscounts: categoryDiscounts,
-        subcategoryDiscounts: subcategoryDiscounts,
-        brandDiscounts: brandDiscounts,
+  const sale = await prisma.$transaction(async (tx) => {
+    await tx.flashSaleProduct.deleteMany({ where: { flashSaleId: id } })
+    return tx.flashSale.update({
+      where: { id },
+      data: {
+        name: data.name,
+        slug: data.slug,
+        description: data.description,
+        active: data.active,
+        criteria: buildCriteria(data),
+        startsAt: data.startsAt ? new Date(data.startsAt) : undefined,
+        endsAt: data.endsAt ? new Date(data.endsAt) : undefined,
+        products: { create: buildFlashSaleProducts(data) },
       },
-      startsAt: data.startsAt ? new Date(data.startsAt) : undefined,
-      endsAt: data.endsAt ? new Date(data.endsAt) : undefined,
-      products: {
-        create: flashSaleProducts,
-      },
-    },
-    include: { products: true },
+      include: { products: true },
+    })
   })
   return NextResponse.json(sale)
+}
+
+// PATCH toggles a sale on/off without touching its discounts
+export async function PATCH(req: NextRequest) {
+  const denied = await requireManager()
+  if (denied) return denied
+
+  const { id, active } = (await req.json()) as { id?: string; active?: boolean }
+  if (!id || typeof active !== "boolean") {
+    return NextResponse.json({ error: "id and active are required" }, { status: 400 })
+  }
+  const sale = await prisma.flashSale.update({ where: { id }, data: { active } })
+  return NextResponse.json(sale)
+}
+
+export async function DELETE(req: NextRequest) {
+  const denied = await requireManager()
+  if (denied) return denied
+
+  const id = req.nextUrl.searchParams.get("id")
+  if (!id) return NextResponse.json({ error: "Flash sale ID is required" }, { status: 400 })
+
+  // FlashSaleProduct rows cascade-delete with the sale
+  await prisma.flashSale.delete({ where: { id } })
+  return NextResponse.json({ success: true })
 }
