@@ -163,7 +163,8 @@ function PaymentContent() {
           ))}
           <div className="flex justify-between text-sm pt-1">
             <span className="text-muted-foreground">Subtotal</span>
-            <span>{formatNaira(order.subtotal)}</span>
+            {/* order.subtotal is already discounted; show the pre-sale amount above the discount line */}
+            <span>{formatNaira(order.subtotal + (order.discount ?? 0))}</span>
           </div>
           {order.discount > 0 && (
             <div className="flex justify-between text-sm text-green-600">

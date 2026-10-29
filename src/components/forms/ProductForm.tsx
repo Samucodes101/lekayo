@@ -107,18 +107,28 @@ export default function ProductForm({ product }: { product?: any }) {
           })) || [],
         })) || [],
       }
-      if (product) {
-        await updateProduct(product.id, cleanedData)
-        toast({ title: "Product updated" })
-      } else {
-        await createProduct(cleanedData)
-        toast({ title: "Product created" })
+      const result = product
+        ? await updateProduct(product.id, cleanedData)
+        : await createProduct(cleanedData)
+      if (!result.ok) {
+        toast({ title: product ? "Couldn't update product" : "Couldn't create product", description: result.error, variant: "destructive" })
+        return
       }
+      toast({ title: product ? "Product updated" : "Product created" })
       router.push("/admin/products")
     } catch (error: any) {
-      toast({ title: "Error", description: error.message || "Something went wrong", variant: "destructive" })
+      // Network failure, request too large, or the server crashed before responding
+      console.error(error)
+      toast({
+        title: "Couldn't reach the server",
+        description: error?.message?.includes("Server Components")
+          ? "The server hit an unexpected error. Check the server logs for details."
+          : error?.message || "Check your connection and try again.",
+        variant: "destructive",
+      })
+    } finally {
+      setLoading(false)
     }
-    setLoading(false)
   }
 
   const watchVariants = form.watch("variants")

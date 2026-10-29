@@ -56,7 +56,11 @@ export default function ProductList({
 
     try {
       const result = await deleteProduct(id)
-      toast({ title: result?.archived ? "Product archived" : "Product deleted" })
+      if (!result.ok) {
+        toast({ title: "Unable to delete product", description: result.error, variant: "destructive" })
+        return
+      }
+      toast({ title: result.data.archived ? "Product archived" : "Product deleted" })
       router.refresh()
     } catch (error: any) {
       toast({ title: "Unable to delete product", description: error?.message || "Please remove dependent records first.", variant: "destructive" })

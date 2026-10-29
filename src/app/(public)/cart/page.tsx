@@ -46,7 +46,7 @@ export default function CartPage() {
           ))}
         </div>
         <div>
-          <OrderSummary subtotal={subtotal} discount={discount} shipping={0} total={Math.max(0, total - discount)} />
+          <OrderSummary subtotal={subtotal} discount={discount} shipping={0} total={total} />
           <Button asChild className="w-full mt-4">
             <Link href="/checkout">Proceed to Checkout</Link>
           </Button>
